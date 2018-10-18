@@ -2652,8 +2652,8 @@ function vCenter_Export
 	$vCenterExportFile = "$CsvDir\$vCenterShortName-vCenterExport.csv"
 	Get-VM $vCenterShortName | 
 	Select-Object @{ N = "Name" ; E = { $_.Name } }, 
-	@{ N = "Version" ; E = { $global:DefaultVIServer.ExtensionData.Content.About.Version } }, 
-	@{ N = "Build" ; E = { $global:DefaultVIServer.ExtensionData.Content.About.Build } } | Export-Csv $vCenterExportFile -Append -NoTypeInformation
+	@{ N = "Version" ; E = { $global:DefaultVIServer.Version } }, 
+	@{ N = "Build" ; E = { $global:DefaultVIServer.Build } } | Export-Csv $vCenterExportFile -Append -NoTypeInformation
 
 	if ($MainVcenterTextBox.Text -eq $TargetVcenterTextBox.Text)
 	{
