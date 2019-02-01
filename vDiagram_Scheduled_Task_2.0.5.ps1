@@ -20,6 +20,9 @@
 		Active connection to vCenter to capture data
 
 .CHANGE LOG
+	- 10/22/2018 - v2.0.5
+		Dupliacte Resource Pools for same cluster were being drawn in Visio.
+
 	- 10/22/2018 - v2.0.4
 		Slight changes post presenting at Orlando VMUG UserCon
 		Cleaned up global variables for CSVs & vCenter

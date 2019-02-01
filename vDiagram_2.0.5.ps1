@@ -21,6 +21,9 @@
 		MS Visio
 
 .CHANGE LOG
+	- 10/22/2018 - v2.0.5
+		Dupliacte Resource Pools for same cluster were being drawn in Visio.
+		
 	- 10/22/2018 - v2.0.4
 		Slight changes post presenting at Orlando VMUG UserCon
 		Removed target vCenter box
@@ -58,8 +61,8 @@
 #region Post-Constructor Custom Code
 #region ~~< About >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DateTime = (Get-Date -format "yyyy_MM_dd-HH_MM")
-$MyVer = "2.0.4"
-$LastUpdated = "October 22, 2018"
+$MyVer = "2.0.5"
+$LastUpdated = "February 1, 2019"
 $About = 
 @"
 
@@ -5418,7 +5421,7 @@ function VM_to_ResourcePool
 			Draw_Cluster
 			Connect-VisioObject $DatacenterObject $ClusterObject
 					
-			foreach ($ResourcePool in($ResourcePoolImport | Sort-Object Name | Where-Object { $_.Cluster.contains($Cluster.Name) }))
+			foreach ($ResourcePool in($ResourcePoolImport | Sort-Object Name | Where-Object { $_.Cluster.contains($Cluster.Name) }  | Select -Last 1))
 			{
 				$x = 6.00
 				$y += 1.50
@@ -5429,7 +5432,7 @@ function VM_to_ResourcePool
 								
 				foreach ($VM in($VmImport | Sort-Object Name | Where-Object { $_.ResourcePool.contains($ResourcePool.Name) -and $_.Cluster.contains($Cluster.Name) -and ($_.SRM.contains("placeholderVm") -eq $False) }))
 				{
-					$x += 2.50
+					$x += 3.50
 					if ($VM.OS.contains("Microsoft") -eq $True)
 					{
 						$VMObject = Add-VisioObjectVM $MicrosoftObj $VM
