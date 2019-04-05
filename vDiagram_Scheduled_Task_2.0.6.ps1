@@ -6,11 +6,11 @@
    vDiagram Scheduled Export
 
 .NOTES 
-   File Name	: vDiagram_Scheduled_Task_2.0.4.ps1 
+   File Name	: vDiagram_Scheduled_Task_2.0.6.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.4
+   Version		: 2.0.6
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -20,6 +20,9 @@
 		Active connection to vCenter to capture data
 
 .CHANGE LOG
+	- 04/05/2019 - v2.0.6
+		New drawing added for VMs with snapshots.
+
 	- 10/22/2018 - v2.0.5
 		Dupliacte Resource Pools for same cluster were being drawn in Visio.
 
@@ -212,7 +215,7 @@ function VmHost_Export
 function Vm_Export
 {
 	$VmExportFile = "$CaptureCsvFolder\$vCenter-VmExport.csv"
-	foreach ($Vm in(Get-View -ViewType VirtualMachine -Property Name, Config, Config.Tools, Guest, Guest.Net, Config.Hardware, Summary.Config, Config.DatastoreUrl, Parent, Runtime.Host -Server $vCenter | Sort-Object Name))
+	foreach ($Vm in(Get-View -ViewType VirtualMachine -Property Name, Config, Config.Tools, Guest, Guest.Net, Config.Hardware, Summary.Config, Config.DatastoreUrl, Parent, Runtime.Host, Snapshot, RootSnapshot -Server $vCenter | Sort-Object Name))
 	{
 		$Folder = Get-View -Id $Vm.Parent -Property Name
 		$Vm |
@@ -242,7 +245,9 @@ function Vm_Export
 		@{ N = "NumVirtualDisks" ; E = { $_.Summary.Config.NumVirtualDisks } },
 		@{ N = "CpuReservation" ; E = { $_.Summary.Config.CpuReservation } },
 		@{ N = "MemoryReservation" ; E = { $_.Summary.Config.MemoryReservation } },
-		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } } | Export-Csv $VmExportFile -Append -NoTypeInformation
+		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } },
+		@{ N = "Snapshot" ; E = { $_.Snapshot } },
+		@{ N = "RootSnapshot" ; E = { $_.RootSnapshot } }| Export-Csv $VmExportFile -Append -NoTypeInformation
 	}
 }
 #endregion
@@ -604,6 +609,19 @@ function Resource_Pool_Export
 	}
 }
 #endregion
+#region ~~< Snapshot_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Snapshot_Export
+{
+	$SnapshotExportFile = "$CaptureCsvFolder\$vCenter-SnapshotExport.csv"
+	(Get-VM | Get-Snapshot) | sort VM, Created | 
+	Select-Object @{ N = "Name" ; E = { $_.Name } },
+	@{ N = "VM" ; E = { $_.VM } }, 
+	@{ N = "Created" ; E = { $_.Created } }, 
+	@{ N = "Children" ; E = { $_.Children } }, 
+	@{ N = "ParentSnapshot" ; E = { $_.ParentSnapshot } },
+	@{ N = "IsCurrent" ; E = { $_.IsCurrent } } | Export-Csv $SnapshotExportFile -Append -NoTypeInformation
+}
+#endregion
 #endregion
 #endregion
 
@@ -612,7 +630,7 @@ Export-PSCredential
 #endregion
 
 #region Tasks
-Connect_vCenter; vCenter_Export; Datacenter_Export; Cluster_Export; VmHost_Export; Vm_Export; Template_Export; DatastoreCluster_Export; Datastore_Export; VsSwitch_Export; VssPort_Export; VssVmk_Export; VssPnic_Export; VdSwitch_Export; VdsPort_Export; VdsVmk_Export; VdsPnic_Export; Folder_Export; Rdm_Export; Drs_Rule_Export; Drs_Cluster_Group_Export; Drs_VmHost_Rule_Export; Resource_Pool_Export; Disconnect_vCenter
+Connect_vCenter; vCenter_Export; Datacenter_Export; Cluster_Export; VmHost_Export; Vm_Export; Template_Export; DatastoreCluster_Export; Datastore_Export; VsSwitch_Export; VssPort_Export; VssVmk_Export; VssPnic_Export; VdSwitch_Export; VdsPort_Export; VdsVmk_Export; VdsPnic_Export; Folder_Export; Rdm_Export; Drs_Rule_Export; Drs_Cluster_Group_Export; Drs_VmHost_Rule_Export; Resource_Pool_Export; Snapshot_Export; Disconnect_vCenter
 #endregion
 
 #region Zip Files
