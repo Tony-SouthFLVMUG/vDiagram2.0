@@ -6,11 +6,11 @@
    vDiagram Visio Drawing Tool
 
 .NOTES 
-   File Name	: vDiagram_2.0.6.ps1 
+   File Name	: vDiagram_2.0.7.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.6
+   Version		: 2.0.7
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -21,7 +21,10 @@
 		MS Visio
 
 .CHANGE LOG
-	- 04/05/2019 - v2.0.6
+	- 04/15/2019 - v2.0.7
+		New drawing added for Linked vCenters.
+		
+	- 04/06/2019 - v2.0.6
 		New drawing added for VMs with snapshots.
 
 	- 10/22/2018 - v2.0.5
@@ -54,18 +57,18 @@
 		Feature enhancement requests collected
 #>
 
-#region Constructor
+#region ~~< Constructor >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Drawing")
 [void][System.Reflection.Assembly]::LoadWithPartialName("PresentationFramework")
-#endregion
+#endregion ~~< Constructor >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#region Post-Constructor Custom Code
+#region ~~< Post-Constructor Custom Code >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< About >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DateTime = (Get-Date -format "yyyy_MM_dd-HH_mm")
-$MyVer = "2.0.6"
-$LastUpdated = "April 4, 2019"
+$MyVer = "2.0.7"
+$LastUpdated = "April 15, 2019"
 $About = 
 @"
 
@@ -81,7 +84,7 @@ $About =
 	Last Updated:	$LastUpdated                   
 
 "@
-#endregion
+#endregion ~~< About >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< TestShapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $TestShapes = [System.Environment]::GetFolderPath('MyDocuments') + "\My Shapes\vDiagram_" + $MyVer + ".vssx"
 if (!(Test-Path $TestShapes))
@@ -92,7 +95,7 @@ if (!(Test-Path $TestShapes))
 	Write-Host "Copying Shapes File to My Shapes"
 }
 $shpFile = "\vDiagram_" + $MyVer + ".vssx"
-#endregion
+#endregion ~~< TestShapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Set_WindowStyle >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Set_WindowStyle {
 param(
@@ -123,18 +126,18 @@ param(
     $Win32ShowWindowAsync::ShowWindowAsync($MainWindowHandle, $WindowStates[$Style]) | Out-Null
 }
 Set_WindowStyle MINIMIZE
-#endregion
+#endregion ~~< Set_WindowStyle >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< About_Config >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function About_Config 
 {
 
 	$About
 
-    #Add objects for About
+    # Add objects for About
     $AboutForm = New-Object System.Windows.Forms.Form
     $AboutTextBox = New-Object System.Windows.Forms.RichTextBox
     
-    #About Form
+    # About Form
     $AboutForm.Icon = $Icon
     $AboutForm.AutoScroll = $True
     $AboutForm.ClientSize = New-Object System.Drawing.Size(464,500)
@@ -158,14 +161,15 @@ function About_Config
 
     $AboutForm.Show() | Out-Null
 }
-#endregion
-#endregion
+#endregion ~~< About_Config >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Post-Constructor Custom Code >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#region Form Creation
+#region ~~< Form Creation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vDiagram >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vDiagram = New-Object System.Windows.Forms.Form
 $vDiagram.ClientSize = New-Object System.Drawing.Size(1008, 661)
-$Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($PSHOME + "\powershell.exe")
+$CurrentLocation = Get-Location
+$Icon = "$CurrentLocation" + "\vDiagram.ico"
 $vDiagram.Icon = $Icon
 $vDiagram.Text = "vDiagram " + $MyVer 
 $vDiagram.BackColor = [System.Drawing.Color]::DarkCyan
@@ -181,31 +185,31 @@ $MainMenu.Text = "MainMenu"
 $FileToolStripMenuItem = New-Object System.Windows.Forms.ToolStripMenuItem
 $FileToolStripMenuItem.Size = New-Object System.Drawing.Size(37, 20)
 $FileToolStripMenuItem.Text = "File"
-#endregion
+#endregion ~~< FileToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ExitToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ExitToolStripMenuItem = New-Object System.Windows.Forms.ToolStripMenuItem
 $ExitToolStripMenuItem.Size = New-Object System.Drawing.Size(92, 22)
 $ExitToolStripMenuItem.Text = "Exit"
 $ExitToolStripMenuItem.Add_Click({$vDiagram.Close()})
-#endregion
+#endregion ~~< ExitToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $FileToolStripMenuItem.DropDownItems.AddRange([System.Windows.Forms.ToolStripItem[]](@($ExitToolStripMenuItem)))
-#endregion
+#endregion ~~< File >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Help >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< HelpToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $HelpToolStripMenuItem = New-Object System.Windows.Forms.ToolStripMenuItem
 $HelpToolStripMenuItem.Size = New-Object System.Drawing.Size(44, 20)
 $HelpToolStripMenuItem.Text = "Help"
-#endregion
+#endregion ~~< HelpToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< AboutToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $AboutToolStripMenuItem = New-Object System.Windows.Forms.ToolStripMenuItem
 $AboutToolStripMenuItem.Size = New-Object System.Drawing.Size(107, 22)
 $AboutToolStripMenuItem.Text = "About"
 $AboutToolStripMenuItem.Add_Click({About_Config})
-#endregion
+#endregion ~~< AboutToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $HelpToolStripMenuItem.DropDownItems.AddRange([System.Windows.Forms.ToolStripItem[]](@($AboutToolStripMenuItem)))
-#endregion
+#endregion ~~< Help >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $MainMenu.Items.AddRange([System.Windows.Forms.ToolStripItem[]](@($FileToolStripMenuItem, $HelpToolStripMenuItem)))
-#endregion
+#endregion ~~< ToolStripMenuItem >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< MainTab >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $MainTab = New-Object System.Windows.Forms.TabControl
 $MainTab.Font = New-Object System.Drawing.Font("Tahoma", 8.25, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Point, ([System.Byte](0)))
@@ -231,7 +235,7 @@ $PowershellLabel.Size = New-Object System.Drawing.Size(75, 20)
 $PowershellLabel.TabIndex = 1
 $PowershellLabel.Text = "Powershell:"
 $Prerequisites.Controls.Add($PowershellLabel)
-#endregion
+#endregion ~~< PowershellLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowershellInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowershellInstalled = New-Object System.Windows.Forms.Label
 $PowershellInstalled.Location = New-Object System.Drawing.Point(96, 15)
@@ -240,8 +244,8 @@ $PowershellInstalled.TabIndex = 2
 $PowershellInstalled.Text = ""
 $PowershellInstalled.BackColor = [System.Drawing.Color]::LightGray
 $Prerequisites.Controls.Add($PowershellInstalled)
-#endregion
-#endregion
+#endregion ~~< PowershellInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Powershell >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCli Module >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCliModuleLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowerCliModuleLabel = New-Object System.Windows.Forms.Label
@@ -250,7 +254,7 @@ $PowerCliModuleLabel.Size = New-Object System.Drawing.Size(110, 20)
 $PowerCliModuleLabel.TabIndex = 3
 $PowerCliModuleLabel.Text = "PowerCLI Module:"
 $Prerequisites.Controls.Add($PowerCliModuleLabel)
-#endregion
+#endregion ~~< PowerCliModuleLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCliModuleInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowerCliModuleInstalled = New-Object System.Windows.Forms.Label
 $PowerCliModuleInstalled.Location = New-Object System.Drawing.Point(128, 40)
@@ -259,8 +263,8 @@ $PowerCliModuleInstalled.TabIndex = 4
 $PowerCliModuleInstalled.Text = ""
 $PowerCliModuleInstalled.BackColor = [System.Drawing.Color]::LightGray
 $Prerequisites.Controls.Add($PowerCliModuleInstalled)
-#endregion
-#endregion
+#endregion ~~< PowerCliModuleInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< PowerCli Module >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCli >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCliLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowerCliLabel = New-Object System.Windows.Forms.Label
@@ -269,7 +273,7 @@ $PowerCliLabel.Size = New-Object System.Drawing.Size(64, 20)
 $PowerCliLabel.TabIndex = 5
 $PowerCliLabel.Text = "PowerCLI:"
 $Prerequisites.Controls.Add($PowerCliLabel)
-#endregion
+#endregion ~~< PowerCliLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCliInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowerCliInstalled = New-Object System.Windows.Forms.Label
 $PowerCliInstalled.Location = New-Object System.Drawing.Point(520, 15)
@@ -278,8 +282,8 @@ $PowerCliInstalled.TabIndex = 6
 $PowerCliInstalled.Text = ""
 $PowerCliInstalled.BackColor = [System.Drawing.Color]::LightGray
 $Prerequisites.Controls.Add($PowerCliInstalled)
-#endregion
-#endregion
+#endregion ~~< PowerCliInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< PowerCli >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Visio >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VisioLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VisioLabel = New-Object System.Windows.Forms.Label
@@ -288,7 +292,7 @@ $VisioLabel.Size = New-Object System.Drawing.Size(40, 20)
 $VisioLabel.TabIndex = 7
 $VisioLabel.Text = "Visio:"
 $Prerequisites.Controls.Add($VisioLabel)
-#endregion
+#endregion ~~< VisioLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VisioInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VisioInstalled = New-Object System.Windows.Forms.Label
 $VisioInstalled.Location = New-Object System.Drawing.Point(490, 40)
@@ -297,10 +301,10 @@ $VisioInstalled.TabIndex = 8
 $VisioInstalled.Text = ""
 $VisioInstalled.BackColor = [System.Drawing.Color]::LightGray
 $Prerequisites.Controls.Add($VisioInstalled)
-#endregion
-#endregion
+#endregion ~~< VisioInstalled >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Visio >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $MainTab.Controls.Add($Prerequisites)
-#endregion
+#endregion ~~< Prerequisites >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenterInfo >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vCenterInfo = New-Object System.Windows.Forms.TabPage
 $vCenterInfo.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
@@ -317,7 +321,7 @@ $VcenterLabel.Size = New-Object System.Drawing.Size(70, 20)
 $VcenterLabel.TabIndex = 1
 $VcenterLabel.Text = "vCenter:"
 $vCenterInfo.Controls.Add($VcenterLabel)
-#endregion
+#endregion ~~< VcenterLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VcenterTextBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VcenterTextBox = New-Object System.Windows.Forms.TextBox
 $VcenterTextBox.Location = New-Object System.Drawing.Point(78, 8)
@@ -325,7 +329,7 @@ $VcenterTextBox.Size = New-Object System.Drawing.Size(238, 21)
 $VcenterTextBox.TabIndex = 2
 $VcenterTextBox.Text = ""
 $vCenterInfo.Controls.Add($VcenterTextBox)
-#endregion
+#endregion ~~< VcenterTextBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< UserNameLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $UserNameLabel = New-Object System.Windows.Forms.Label
 $UserNameLabel.Location = New-Object System.Drawing.Point(324, 11)
@@ -333,7 +337,7 @@ $UserNameLabel.Size = New-Object System.Drawing.Size(70, 20)
 $UserNameLabel.TabIndex = 3
 $UserNameLabel.Text = "User Name:"
 $vCenterInfo.Controls.Add($UserNameLabel)
-#endregion
+#endregion ~~< UserNameLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< UserNameTextBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $UserNameTextBox = New-Object System.Windows.Forms.TextBox
 $UserNameTextBox.Location = New-Object System.Drawing.Point(402, 8)
@@ -341,7 +345,7 @@ $UserNameTextBox.Size = New-Object System.Drawing.Size(238, 21)
 $UserNameTextBox.TabIndex = 4
 $UserNameTextBox.Text = ""
 $vCenterInfo.Controls.Add($UserNameTextBox)
-#endregion
+#endregion ~~< UserNameTextBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PasswordLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PasswordLabel = New-Object System.Windows.Forms.Label
 $PasswordLabel.Location = New-Object System.Drawing.Point(656, 11)
@@ -349,7 +353,7 @@ $PasswordLabel.Size = New-Object System.Drawing.Size(70, 20)
 $PasswordLabel.TabIndex = 5
 $PasswordLabel.Text = "Password:"
 $vCenterInfo.Controls.Add($PasswordLabel)
-#endregion
+#endregion ~~< PasswordLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PasswordTextBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PasswordTextBox = New-Object System.Windows.Forms.TextBox
 $PasswordTextBox.Location = New-Object System.Drawing.Point(734, 8)
@@ -358,7 +362,7 @@ $PasswordTextBox.TabIndex = 6
 $PasswordTextBox.Text = ""
 $PasswordTextBox.UseSystemPasswordChar = $true
 $vCenterInfo.Controls.Add($PasswordTextBox)
-#endregion
+#endregion ~~< PasswordTextBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ConnectButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ConnectButton = New-Object System.Windows.Forms.Button
 $ConnectButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -368,12 +372,12 @@ $ConnectButton.TabIndex = 7
 $ConnectButton.Text = "Connect to vCenter"
 $ConnectButton.UseVisualStyleBackColor = $true
 $vCenterInfo.Controls.Add($ConnectButton)
-#endregion
+#endregion ~~< ConnectButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $MainTab.Controls.Add($vCenterInfo)
-#endregion
+#endregion ~~< vCenterInfo >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $MainTab.SelectedIndex = 0
 $vDiagram.Controls.Add($MainTab)
-#endregion
+#endregion ~~< MainTab >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< SubTab >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SubTab = New-Object System.Windows.Forms.TabControl
 $SubTab.Font = New-Object System.Drawing.Font("Tahoma", 8.25, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Point, ([System.Byte](0)))
@@ -398,7 +402,7 @@ $PrerequisitesHeading.Size = New-Object System.Drawing.Size(149, 23)
 $PrerequisitesHeading.TabIndex = 0
 $PrerequisitesHeading.Text = "Prerequisites Tab"
 $TabDirections.Controls.Add($PrerequisitesHeading)
-#endregion
+#endregion ~~< PrerequisitesHeading >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PrerequisitesDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PrerequisitesDirections = New-Object System.Windows.Forms.Label
 $PrerequisitesDirections.Location = New-Object System.Drawing.Point(8, 32)
@@ -406,7 +410,7 @@ $PrerequisitesDirections.Size = New-Object System.Drawing.Size(900, 30)
 $PrerequisitesDirections.TabIndex = 1
 $PrerequisitesDirections.Text = "1. Verify that prerequisites are met on the "+[char]34+"Prerequisites"+[char]34+" tab."+[char]13+[char]10+"2. If not please install needed requirements."
 $TabDirections.Controls.Add($PrerequisitesDirections)
-#endregion
+#endregion ~~< PrerequisitesDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenterInfoHeading >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vCenterInfoHeading = New-Object System.Windows.Forms.Label
 $vCenterInfoHeading.Font = New-Object System.Drawing.Font("Tahoma", 11.0, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Point, ([System.Byte](0)))
@@ -415,7 +419,7 @@ $vCenterInfoHeading.Size = New-Object System.Drawing.Size(149, 23)
 $vCenterInfoHeading.TabIndex = 2
 $vCenterInfoHeading.Text = "vCenter Info Tab"
 $TabDirections.Controls.Add($vCenterInfoHeading)
-#endregion
+#endregion ~~< vCenterInfoHeading >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenterInfoDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vCenterInfoDirections = New-Object System.Windows.Forms.Label
 $vCenterInfoDirections.Location = New-Object System.Drawing.Point(8, 96)
@@ -423,7 +427,7 @@ $vCenterInfoDirections.Size = New-Object System.Drawing.Size(900, 70)
 $vCenterInfoDirections.TabIndex = 3
 $vCenterInfoDirections.Text = "1. Click on "+[char]34+"vCenter Info"+[char]34+" tab."+[char]13+[char]10+"2. Enter name of vCenter."+[char]13+[char]10+"3. Enter User Name and Password (password will be hashed and not plain text)."+[char]13+[char]10+"4. Click on "+[char]34+"Connect to vCenter"+[char]34+" button."
 $TabDirections.Controls.Add($vCenterInfoDirections)
-#endregion
+#endregion ~~< vCenterInfoDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureCsvHeading >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureCsvHeading = New-Object System.Windows.Forms.Label
 $CaptureCsvHeading.Font = New-Object System.Drawing.Font("Tahoma", 11.0, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Point, ([System.Byte](0)))
@@ -432,7 +436,7 @@ $CaptureCsvHeading.Size = New-Object System.Drawing.Size(216, 23)
 $CaptureCsvHeading.TabIndex = 4
 $CaptureCsvHeading.Text = "Capture CSVs for Visio Tab"
 $TabDirections.Controls.Add($CaptureCsvHeading)
-#endregion
+#endregion ~~< CaptureCsvHeading >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureDirections = New-Object System.Windows.Forms.Label
 $CaptureDirections.Location = New-Object System.Drawing.Point(8, 200)
@@ -440,7 +444,7 @@ $CaptureDirections.Size = New-Object System.Drawing.Size(900, 65)
 $CaptureDirections.TabIndex = 5
 $CaptureDirections.Text = "1. Click on "+[char]34+"Capture CSVs for Visio"+[char]34+" tab."+[char]13+[char]10+"2. Click on "+[char]34+"Select Output Folder"+[char]34+" button and select folder where you would like to output the CSVs to."+[char]13+[char]10+"3. Select items you wish to grab data on."+[char]13+[char]10+"4. Click on "+[char]34+"Collect CSV Data"+[char]34+" button."
 $TabDirections.Controls.Add($CaptureDirections)
-#endregion
+#endregion ~~< CaptureDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawHeading >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawHeading = New-Object System.Windows.Forms.Label
 $DrawHeading.Font = New-Object System.Drawing.Font("Tahoma", 11.0, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Point, ([System.Byte](0)))
@@ -449,7 +453,7 @@ $DrawHeading.Size = New-Object System.Drawing.Size(149, 23)
 $DrawHeading.TabIndex = 6
 $DrawHeading.Text = "Draw Visio Tab"
 $TabDirections.Controls.Add($DrawHeading)
-#endregion
+#endregion ~~< DrawHeading >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawDirections = New-Object System.Windows.Forms.Label
 $DrawDirections.Location = New-Object System.Drawing.Point(8, 288)
@@ -457,9 +461,9 @@ $DrawDirections.Size = New-Object System.Drawing.Size(900, 130)
 $DrawDirections.TabIndex = 7
 $DrawDirections.Text = "1. Click on "+[char]34+"Select Input Folder"+[char]34+" button and select location where CSVs can be found."+[char]13+[char]10+"2. Click on "+[char]34+"Check for CSVs"+[char]39+" button to validate presence of required files."+[char]13+[char]10+"3. Click on "+[char]34+"Select Output Folder"+[char]34+" button and select where location where you would like to save the Visio drawing."+[char]13+[char]10+"4. Select drawing that you would like to produce."+[char]13+[char]10+"5. Click on "+[char]34+"Draw Visio"+[char]34+" button."+[char]13+[char]10+"6. Click on "+[char]34+"Open Visio Drawing"+[char]34+" button once "+[char]34+"Draw Visio"+[char]34+" button says it has completed."
 $TabDirections.Controls.Add($DrawDirections)
-#endregion
+#endregion ~~< DrawDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SubTab.Controls.Add($TabDirections)
-#endregion
+#endregion ~~< TabDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< TabCapture >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $TabCapture = New-Object System.Windows.Forms.TabPage
 $TabCapture.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
@@ -478,7 +482,7 @@ $CaptureCsvOutputLabel.Size = New-Object System.Drawing.Size(210, 25)
 $CaptureCsvOutputLabel.TabIndex = 0
 $CaptureCsvOutputLabel.Text = "CSV Output Folder:"
 $TabCapture.Controls.Add($CaptureCsvOutputLabel)
-#endregion
+#endregion ~~< CaptureCsvOutputLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureCsvOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureCsvOutputButton = New-Object System.Windows.Forms.Button
 $CaptureCsvOutputButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -489,13 +493,13 @@ $CaptureCsvOutputButton.Text = "Select Output Folder"
 $CaptureCsvOutputButton.UseVisualStyleBackColor = $false
 $CaptureCsvOutputButton.BackColor = [System.Drawing.Color]::LightGray
 $TabCapture.Controls.Add($CaptureCsvOutputButton)
-#endregion
+#endregion ~~< CaptureCsvOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureCsvBrowse >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureCsvBrowse = New-Object System.Windows.Forms.FolderBrowserDialog
 $CaptureCsvBrowse.Description = "Select a directory"
 $CaptureCsvBrowse.RootFolder = [System.Environment+SpecialFolder]::MyComputer
-#endregion
-#endregion
+#endregion ~~< CaptureCsvBrowse >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< CSV >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CheckBoxes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vCenterCsvCheckBox = New-Object System.Windows.Forms.CheckBox
@@ -507,7 +511,7 @@ $vCenterCsvCheckBox.TabIndex = 1
 $vCenterCsvCheckBox.Text = "Export vCenter Info"
 $vCenterCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($vCenterCsvCheckBox)
-#endregion
+#endregion ~~< vCenterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vCenterCsvValidationComplete = New-Object System.Windows.Forms.Label
 $vCenterCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 40)
@@ -515,7 +519,7 @@ $vCenterCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $vCenterCsvValidationComplete.TabIndex = 26
 $vCenterCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($vCenterCsvValidationComplete)
-#endregion
+#endregion ~~< vCenterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatacenterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatacenterCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $DatacenterCsvCheckBox.Checked = $true
@@ -526,7 +530,7 @@ $DatacenterCsvCheckBox.TabIndex = 2
 $DatacenterCsvCheckBox.Text = "Export Datacenter Info"
 $DatacenterCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($DatacenterCsvCheckBox)
-#endregion
+#endregion ~~< DatacenterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatacenterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatacenterCsvValidationComplete = New-Object System.Windows.Forms.Label
 $DatacenterCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 60)
@@ -534,7 +538,7 @@ $DatacenterCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $DatacenterCsvValidationComplete.TabIndex = 27
 $DatacenterCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($DatacenterCsvValidationComplete)
-#endregion
+#endregion ~~< DatacenterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ClusterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ClusterCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $ClusterCsvCheckBox.Checked = $true
@@ -545,7 +549,7 @@ $ClusterCsvCheckBox.TabIndex = 3
 $ClusterCsvCheckBox.Text = "Export Cluster Info"
 $ClusterCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($ClusterCsvCheckBox)
-#endregion
+#endregion ~~< ClusterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ClusterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ClusterCsvValidationComplete = New-Object System.Windows.Forms.Label
 $ClusterCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 80)
@@ -553,7 +557,7 @@ $ClusterCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $ClusterCsvValidationComplete.TabIndex = 28
 $ClusterCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($ClusterCsvValidationComplete)
-#endregion
+#endregion ~~< ClusterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmHostCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmHostCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VmHostCsvCheckBox.Checked = $true
@@ -564,7 +568,7 @@ $VmHostCsvCheckBox.TabIndex = 4
 $VmHostCsvCheckBox.Text = "Export VmHost Info"
 $VmHostCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VmHostCsvCheckBox)
-#endregion
+#endregion ~~< VmHostCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmHostCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmHostCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VmHostCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 100)
@@ -572,7 +576,7 @@ $VmHostCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VmHostCsvValidationComplete.TabIndex = 29
 $VmHostCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VmHostCsvValidationComplete)
-#endregion
+#endregion ~~< VmHostCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VmCsvCheckBox.Checked = $true
@@ -583,7 +587,7 @@ $VmCsvCheckBox.TabIndex = 5
 $VmCsvCheckBox.Text = "Export Vm Info"
 $VmCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VmCsvCheckBox)
-#endregion
+#endregion ~~< VmCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VmCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 120)
@@ -591,7 +595,7 @@ $VmCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VmCsvValidationComplete.TabIndex = 30
 $VmCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VmCsvValidationComplete)
-#endregion
+#endregion ~~< VmCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< TemplateCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $TemplateCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $TemplateCsvCheckBox.Checked = $true
@@ -602,7 +606,7 @@ $TemplateCsvCheckBox.TabIndex = 6
 $TemplateCsvCheckBox.Text = "Export Template Info"
 $TemplateCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($TemplateCsvCheckBox)
-#endregion
+#endregion ~~< TemplateCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< TemplateCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $TemplateCsvValidationComplete = New-Object System.Windows.Forms.Label
 $TemplateCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 140)
@@ -610,7 +614,7 @@ $TemplateCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $TemplateCsvValidationComplete.TabIndex = 31
 $TemplateCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($TemplateCsvValidationComplete)
-#endregion
+#endregion ~~< TemplateCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreClusterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreClusterCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $DatastoreClusterCsvCheckBox.Checked = $true
@@ -621,7 +625,7 @@ $DatastoreClusterCsvCheckBox.TabIndex = 7
 $DatastoreClusterCsvCheckBox.Text = "Export Datastore Cluster Info"
 $DatastoreClusterCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($DatastoreClusterCsvCheckBox)
-#endregion
+#endregion ~~< DatastoreClusterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreClusterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreClusterCsvValidationComplete = New-Object System.Windows.Forms.Label
 $DatastoreClusterCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 160)
@@ -629,7 +633,7 @@ $DatastoreClusterCsvValidationComplete.Size = New-Object System.Drawing.Size(90,
 $DatastoreClusterCsvValidationComplete.TabIndex = 32
 $DatastoreClusterCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($DatastoreClusterCsvValidationComplete)
-#endregion
+#endregion ~~< DatastoreClusterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $DatastoreCsvCheckBox.Checked = $true
@@ -640,7 +644,7 @@ $DatastoreCsvCheckBox.TabIndex = 8
 $DatastoreCsvCheckBox.Text = "Export Datastore Info"
 $DatastoreCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($DatastoreCsvCheckBox)
-#endregion
+#endregion ~~< DatastoreCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreCsvValidationComplete = New-Object System.Windows.Forms.Label
 $DatastoreCsvValidationComplete.Location = New-Object System.Drawing.Point(210, 180)
@@ -648,7 +652,7 @@ $DatastoreCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $DatastoreCsvValidationComplete.TabIndex = 33
 $DatastoreCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($DatastoreCsvValidationComplete)
-#endregion
+#endregion ~~< DatastoreCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VsSwitchCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VsSwitchCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VsSwitchCsvCheckBox.Checked = $true
@@ -659,7 +663,7 @@ $VsSwitchCsvCheckBox.TabIndex = 9
 $VsSwitchCsvCheckBox.Text = "Export VsSwitch Info"
 $VsSwitchCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VsSwitchCsvCheckBox)
-#endregion
+#endregion ~~< VsSwitchCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VsSwitchCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VsSwitchCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VsSwitchCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 40)
@@ -667,7 +671,7 @@ $VsSwitchCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VsSwitchCsvValidationComplete.TabIndex = 34
 $VsSwitchCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VsSwitchCsvValidationComplete)
-#endregion
+#endregion ~~< VsSwitchCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPortGroupCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPortGroupCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VssPortGroupCsvCheckBox.Checked = $true
@@ -678,7 +682,7 @@ $VssPortGroupCsvCheckBox.TabIndex = 10
 $VssPortGroupCsvCheckBox.Text = "Export VSS Port Group Info"
 $VssPortGroupCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VssPortGroupCsvCheckBox)
-#endregion
+#endregion ~~< VssPortGroupCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPortGroupCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPortGroupCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VssPortGroupCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 60)
@@ -686,7 +690,7 @@ $VssPortGroupCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VssPortGroupCsvValidationComplete.TabIndex = 35
 $VssPortGroupCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VssPortGroupCsvValidationComplete)
-#endregion
+#endregion ~~< VssPortGroupCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssVmkernelCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssVmkernelCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VssVmkernelCsvCheckBox.Checked = $true
@@ -697,7 +701,7 @@ $VssVmkernelCsvCheckBox.TabIndex = 11
 $VssVmkernelCsvCheckBox.Text = "Export VSS Vmkernel Info"
 $VssVmkernelCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VssVmkernelCsvCheckBox)
-#endregion
+#endregion ~~< VssVmkernelCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssVmkernelCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssVmkernelCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VssVmkernelCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 80)
@@ -705,7 +709,7 @@ $VssVmkernelCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VssVmkernelCsvValidationComplete.TabIndex = 36
 $VssVmkernelCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VssVmkernelCsvValidationComplete)
-#endregion
+#endregion ~~< VssVmkernelCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPnicCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPnicCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VssPnicCsvCheckBox.Checked = $true
@@ -716,7 +720,7 @@ $VssPnicCsvCheckBox.TabIndex = 12
 $VssPnicCsvCheckBox.Text = "Export VSS Pnic Info"
 $VssPnicCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VssPnicCsvCheckBox)
-#endregion
+#endregion ~~< VssPnicCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPnicCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPnicCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VssPnicCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 100)
@@ -724,7 +728,7 @@ $VssPnicCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VssPnicCsvValidationComplete.TabIndex = 37
 $VssPnicCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VssPnicCsvValidationComplete)
-#endregion
+#endregion ~~< VssPnicCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdSwitchCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdSwitchCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VdSwitchCsvCheckBox.Checked = $true
@@ -735,7 +739,7 @@ $VdSwitchCsvCheckBox.TabIndex = 13
 $VdSwitchCsvCheckBox.Text = "Export VdSwitch Info"
 $VdSwitchCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VdSwitchCsvCheckBox)
-#endregion
+#endregion ~~< VdSwitchCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdSwitchCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdSwitchCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VdSwitchCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 120)
@@ -743,7 +747,7 @@ $VdSwitchCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VdSwitchCsvValidationComplete.TabIndex = 38
 $VdSwitchCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VdSwitchCsvValidationComplete)
-#endregion
+#endregion ~~< VdSwitchCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPortGroupCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPortGroupCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VdsPortGroupCsvCheckBox.Checked = $true
@@ -754,7 +758,7 @@ $VdsPortGroupCsvCheckBox.TabIndex = 14
 $VdsPortGroupCsvCheckBox.Text = "Export VDS Port Group Info"
 $VdsPortGroupCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VdsPortGroupCsvCheckBox)
-#endregion
+#endregion ~~< VdsPortGroupCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPortGroupCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPortGroupCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VdsPortGroupCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 140)
@@ -762,7 +766,7 @@ $VdsPortGroupCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VdsPortGroupCsvValidationComplete.TabIndex = 39
 $VdsPortGroupCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VdsPortGroupCsvValidationComplete)
-#endregion
+#endregion ~~< VdsPortGroupCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsVmkernelCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsVmkernelCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VdsVmkernelCsvCheckBox.Checked = $true
@@ -773,7 +777,7 @@ $VdsVmkernelCsvCheckBox.TabIndex = 15
 $VdsVmkernelCsvCheckBox.Text = "Export VDS Vmkernel Info"
 $VdsVmkernelCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VdsVmkernelCsvCheckBox)
-#endregion
+#endregion ~~< VdsVmkernelCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsVmkernelCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsVmkernelCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VdsVmkernelCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 160)
@@ -781,7 +785,7 @@ $VdsVmkernelCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VdsVmkernelCsvValidationComplete.TabIndex = 40
 $VdsVmkernelCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VdsVmkernelCsvValidationComplete)
-#endregion
+#endregion ~~< VdsVmkernelCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPnicCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPnicCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $VdsPnicCsvCheckBox.Checked = $true
@@ -792,7 +796,7 @@ $VdsPnicCsvCheckBox.TabIndex = 16
 $VdsPnicCsvCheckBox.Text = "Export VDS Pnic Info"
 $VdsPnicCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($VdsPnicCsvCheckBox)
-#endregion
+#endregion ~~< VdsPnicCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPnicCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPnicCsvValidationComplete = New-Object System.Windows.Forms.Label
 $VdsPnicCsvValidationComplete.Location = New-Object System.Drawing.Point(520, 180)
@@ -800,7 +804,7 @@ $VdsPnicCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $VdsPnicCsvValidationComplete.TabIndex = 41
 $VdsPnicCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($VdsPnicCsvValidationComplete)
-#endregion
+#endregion ~~< VdsPnicCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< FolderCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $FolderCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $FolderCsvCheckBox.Checked = $true
@@ -811,7 +815,7 @@ $FolderCsvCheckBox.TabIndex = 17
 $FolderCsvCheckBox.Text = "Export Folder Info"
 $FolderCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($FolderCsvCheckBox)
-#endregion
+#endregion ~~< FolderCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< FolderCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $FolderCsvValidationComplete = New-Object System.Windows.Forms.Label
 $FolderCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 40)
@@ -819,7 +823,7 @@ $FolderCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $FolderCsvValidationComplete.TabIndex = 42
 $FolderCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($FolderCsvValidationComplete)
-#endregion
+#endregion ~~< FolderCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< RdmCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $RdmCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $RdmCsvCheckBox.Checked = $true
@@ -830,7 +834,7 @@ $RdmCsvCheckBox.TabIndex = 18
 $RdmCsvCheckBox.Text = "Export RDM Info"
 $RdmCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($RdmCsvCheckBox)
-#endregion
+#endregion ~~< RdmCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< RdmCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $RdmCsvValidationComplete = New-Object System.Windows.Forms.Label
 $RdmCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 60)
@@ -838,7 +842,7 @@ $RdmCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $RdmCsvValidationComplete.TabIndex = 43
 $RdmCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($RdmCsvValidationComplete)
-#endregion
+#endregion ~~< RdmCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsRuleCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsRuleCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $DrsRuleCsvCheckBox.Checked = $true
@@ -849,7 +853,7 @@ $DrsRuleCsvCheckBox.TabIndex = 19
 $DrsRuleCsvCheckBox.Text = "Export DRS Rule Info"
 $DrsRuleCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($DrsRuleCsvCheckBox)
-#endregion
+#endregion ~~< DrsRuleCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsRuleCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsRuleCsvValidationComplete = New-Object System.Windows.Forms.Label
 $DrsRuleCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 80)
@@ -857,7 +861,7 @@ $DrsRuleCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $DrsRuleCsvValidationComplete.TabIndex = 44
 $DrsRuleCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($DrsRuleCsvValidationComplete)
-#endregion
+#endregion ~~< DrsRuleCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsClusterGroupCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsClusterGroupCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $DrsClusterGroupCsvCheckBox.Checked = $true
@@ -868,7 +872,7 @@ $DrsClusterGroupCsvCheckBox.TabIndex = 20
 $DrsClusterGroupCsvCheckBox.Text = "Export DRS Cluster Group Info"
 $DrsClusterGroupCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($DrsClusterGroupCsvCheckBox)
-#endregion
+#endregion ~~< DrsClusterGroupCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsClusterGroupCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsClusterGroupCsvValidationComplete = New-Object System.Windows.Forms.Label
 $DrsClusterGroupCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 100)
@@ -876,7 +880,7 @@ $DrsClusterGroupCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 
 $DrsClusterGroupCsvValidationComplete.TabIndex = 45
 $DrsClusterGroupCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($DrsClusterGroupCsvValidationComplete)
-#endregion
+#endregion ~~< DrsClusterGroupCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsVmHostRuleCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsVmHostRuleCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $DrsVmHostRuleCsvCheckBox.Checked = $true
@@ -887,7 +891,7 @@ $DrsVmHostRuleCsvCheckBox.TabIndex = 21
 $DrsVmHostRuleCsvCheckBox.Text = "Export DRS VmHost Rule Info"
 $DrsVmHostRuleCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($DrsVmHostRuleCsvCheckBox)
-#endregion
+#endregion ~~< DrsVmHostRuleCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsVmHostRuleCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsVmHostRuleCsvValidationComplete = New-Object System.Windows.Forms.Label
 $DrsVmHostRuleCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 120)
@@ -895,7 +899,7 @@ $DrsVmHostRuleCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20
 $DrsVmHostRuleCsvValidationComplete.TabIndex = 46
 $DrsVmHostRuleCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($DrsVmHostRuleCsvValidationComplete)
-#endregion
+#endregion ~~< DrsVmHostRuleCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ResourcePoolCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ResourcePoolCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $ResourcePoolCsvCheckBox.Checked = $true
@@ -906,7 +910,7 @@ $ResourcePoolCsvCheckBox.TabIndex = 22
 $ResourcePoolCsvCheckBox.Text = "Export Resource Pool Info"
 $ResourcePoolCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($ResourcePoolCsvCheckBox)
-#endregion
+#endregion ~~< ResourcePoolCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ResourcePoolCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ResourcePoolCsvValidationComplete = New-Object System.Windows.Forms.Label
 $ResourcePoolCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 140)
@@ -914,8 +918,8 @@ $ResourcePoolCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $ResourcePoolCsvValidationComplete.TabIndex = 47
 $ResourcePoolCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($ResourcePoolCsvValidationComplete)
-#endregion
-#region ~~< SnapshotCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< ResourcePoolCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< SnapshotCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SnapshotCsvCheckBox = New-Object System.Windows.Forms.CheckBox
 $SnapshotCsvCheckBox.Checked = $true
 $SnapshotCsvCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
@@ -925,16 +929,35 @@ $SnapshotCsvCheckBox.TabIndex = 23
 $SnapshotCsvCheckBox.Text = "Export Snapshot Info"
 $SnapshotCsvCheckBox.UseVisualStyleBackColor = $true
 $TabCapture.Controls.Add($SnapshotCsvCheckBox)
-#endregion
-#region ~~< SnapshotCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< SnapshotCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< SnapshotCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SnapshotCsvValidationComplete = New-Object System.Windows.Forms.Label
 $SnapshotCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 160)
 $SnapshotCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
 $SnapshotCsvValidationComplete.TabIndex = 48
 $SnapshotCsvValidationComplete.Text = ""
 $TabCapture.Controls.Add($SnapshotCsvValidationComplete)
-#endregion
-#endregion
+#endregion ~~< SnapshotCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< LinkedvCenterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$LinkedvCenterCsvCheckBox = New-Object System.Windows.Forms.CheckBox
+$LinkedvCenterCsvCheckBox.Checked = $true
+$LinkedvCenterCsvCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
+$LinkedvCenterCsvCheckBox.Location = New-Object System.Drawing.Point(620, 180)
+$LinkedvCenterCsvCheckBox.Size = New-Object System.Drawing.Size(200, 20)
+$LinkedvCenterCsvCheckBox.TabIndex = 24
+$LinkedvCenterCsvCheckBox.Text = "Export Linked vCenter Info"
+$LinkedvCenterCsvCheckBox.UseVisualStyleBackColor = $true
+$TabCapture.Controls.Add($LinkedvCenterCsvCheckBox)
+#endregion ~~< LinkedvCenterCsvCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< LinkedvCenterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$LinkedvCenterCsvValidationComplete = New-Object System.Windows.Forms.Label
+$LinkedvCenterCsvValidationComplete.Location = New-Object System.Drawing.Point(830, 180)
+$LinkedvCenterCsvValidationComplete.Size = New-Object System.Drawing.Size(90, 20)
+$LinkedvCenterCsvValidationComplete.TabIndex = 49
+$LinkedvCenterCsvValidationComplete.Text = ""
+$TabCapture.Controls.Add($LinkedvCenterCsvValidationComplete)
+#endregion ~~< LinkedvCenterCsvValidationComplete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< CheckBoxes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Buttons >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureUncheckButton = New-Object System.Windows.Forms.Button
@@ -946,7 +969,7 @@ $CaptureUncheckButton.Text = "Uncheck All"
 $CaptureUncheckButton.UseVisualStyleBackColor = $false
 $CaptureUncheckButton.BackColor = [System.Drawing.Color]::LightGray
 $TabCapture.Controls.Add($CaptureUncheckButton)
-#endregion
+#endregion ~~< CaptureUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureCheckButton = New-Object System.Windows.Forms.Button
 $CaptureCheckButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -957,7 +980,7 @@ $CaptureCheckButton.Text = "Check All"
 $CaptureCheckButton.UseVisualStyleBackColor = $false
 $CaptureCheckButton.BackColor = [System.Drawing.Color]::LightGray
 $TabCapture.Controls.Add($CaptureCheckButton)
-#endregion
+#endregion ~~< CaptureCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureButton = New-Object System.Windows.Forms.Button
 $CaptureButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -968,7 +991,7 @@ $CaptureButton.Text = "Collect CSV Data"
 $CaptureButton.UseVisualStyleBackColor = $false
 $CaptureButton.BackColor = [System.Drawing.Color]::LightGray
 $TabCapture.Controls.Add($CaptureButton)
-#endregion
+#endregion ~~< CaptureButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< OpenCaptureButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $OpenCaptureButton = New-Object System.Windows.Forms.Button
 $OpenCaptureButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -979,10 +1002,10 @@ $OpenCaptureButton.Text = "Open CSV Output Folder"
 $OpenCaptureButton.UseVisualStyleBackColor = $false
 $OpenCaptureButton.BackColor = [System.Drawing.Color]::LightGray
 $TabCapture.Controls.Add($OpenCaptureButton)
-#endregion
-#endregion
+#endregion ~~< OpenCaptureButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Buttons >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SubTab.Controls.Add($TabCapture)
-#endregion
+#endregion ~~< TabCapture >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< TabDraw >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $TabDraw = New-Object System.Windows.Forms.TabPage
 $TabDraw.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
@@ -1001,7 +1024,7 @@ $DrawCsvInputLabel.Size = New-Object System.Drawing.Size(190, 25)
 $DrawCsvInputLabel.TabIndex = 0
 $DrawCsvInputLabel.Text = "CSV Input Folder:"
 $TabDraw.Controls.Add($DrawCsvInputLabel)
-#endregion
+#endregion ~~< DrawCsvInputLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawCsvInputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawCsvInputButton = New-Object System.Windows.Forms.Button
 $DrawCsvInputButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -1012,13 +1035,13 @@ $DrawCsvInputButton.Text = "Select CSV Input Folder"
 $DrawCsvInputButton.UseVisualStyleBackColor = $false
 $DrawCsvInputButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($DrawCsvInputButton)
-#endregion
+#endregion ~~< DrawCsvInputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawCsvBrowse >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawCsvBrowse = New-Object System.Windows.Forms.FolderBrowserDialog
 $DrawCsvBrowse.Description = "Select a directory"
 $DrawCsvBrowse.RootFolder = [System.Environment+SpecialFolder]::MyComputer
-#endregion
-#endregion
+#endregion ~~< DrawCsvBrowse >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Input >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CSV Validation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vCenterCsvValidation = New-Object System.Windows.Forms.Label
@@ -1027,7 +1050,7 @@ $vCenterCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $vCenterCsvValidation.TabIndex = 2
 $vCenterCsvValidation.Text = "vCenter CSV File:"
 $TabDraw.Controls.Add($vCenterCsvValidation)
-#endregion
+#endregion ~~< vCenterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vCenterCsvValidationCheck = New-Object System.Windows.Forms.Label
 $vCenterCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 40)
@@ -1035,7 +1058,7 @@ $vCenterCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $vCenterCsvValidationCheck.TabIndex = 3
 $vCenterCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($vCenterCsvValidationCheck)
-#endregion
+#endregion ~~< vCenterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatacenterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatacenterCsvValidation = New-Object System.Windows.Forms.Label
 $DatacenterCsvValidation.Location = New-Object System.Drawing.Point(10, 60)
@@ -1043,7 +1066,7 @@ $DatacenterCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $DatacenterCsvValidation.TabIndex = 4
 $DatacenterCsvValidation.Text = "Datacenter CSV File:"
 $TabDraw.Controls.Add($DatacenterCsvValidation)
-#endregion
+#endregion ~~< DatacenterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatacenterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatacenterCsvValidationCheck = New-Object System.Windows.Forms.Label
 $DatacenterCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 60)
@@ -1051,7 +1074,7 @@ $DatacenterCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $DatacenterCsvValidationCheck.TabIndex = 5
 $DatacenterCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($DatacenterCsvValidationCheck)
-#endregion
+#endregion ~~< DatacenterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ClusterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ClusterCsvValidation = New-Object System.Windows.Forms.Label
 $ClusterCsvValidation.Location = New-Object System.Drawing.Point(10, 80)
@@ -1059,7 +1082,7 @@ $ClusterCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $ClusterCsvValidation.TabIndex = 6
 $ClusterCsvValidation.Text = "Cluster CSV File:"
 $TabDraw.Controls.Add($ClusterCsvValidation)
-#endregion
+#endregion ~~< ClusterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ClusterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ClusterCsvValidationCheck = New-Object System.Windows.Forms.Label
 $ClusterCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 80)
@@ -1067,7 +1090,7 @@ $ClusterCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $ClusterCsvValidationCheck.TabIndex = 7
 $ClusterCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($ClusterCsvValidationCheck)
-#endregion
+#endregion ~~< ClusterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmHostCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmHostCsvValidation = New-Object System.Windows.Forms.Label
 $VmHostCsvValidation.Location = New-Object System.Drawing.Point(10, 100)
@@ -1075,7 +1098,7 @@ $VmHostCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VmHostCsvValidation.TabIndex = 8
 $VmHostCsvValidation.Text = "VmHost CSV File:"
 $TabDraw.Controls.Add($VmHostCsvValidation)
-#endregion
+#endregion ~~< VmHostCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmHostCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmHostCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VmHostCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 100)
@@ -1083,7 +1106,7 @@ $VmHostCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VmHostCsvValidationCheck.TabIndex = 9
 $VmHostCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VmHostCsvValidationCheck)
-#endregion
+#endregion ~~< VmHostCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmCsvValidation = New-Object System.Windows.Forms.Label
 $VmCsvValidation.Location = New-Object System.Drawing.Point(10, 120)
@@ -1091,7 +1114,7 @@ $VmCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VmCsvValidation.TabIndex = 10
 $VmCsvValidation.Text = "VM CSV File:"
 $TabDraw.Controls.Add($VmCsvValidation)
-#endregion
+#endregion ~~< VmCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VmCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VmCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 120)
@@ -1099,7 +1122,7 @@ $VmCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VmCsvValidationCheck.TabIndex = 11
 $VmCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VmCsvValidationCheck)
-#endregion
+#endregion ~~< VmCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< TemplateCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $TemplateCsvValidation = New-Object System.Windows.Forms.Label
 $TemplateCsvValidation.Location = New-Object System.Drawing.Point(10, 140)
@@ -1107,7 +1130,7 @@ $TemplateCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $TemplateCsvValidation.TabIndex = 12
 $TemplateCsvValidation.Text = "Template CSV File:"
 $TabDraw.Controls.Add($TemplateCsvValidation)
-#endregion
+#endregion ~~< TemplateCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< TemplateCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $TemplateCsvValidationCheck = New-Object System.Windows.Forms.Label
 $TemplateCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 140)
@@ -1115,7 +1138,7 @@ $TemplateCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $TemplateCsvValidationCheck.TabIndex = 13
 $TemplateCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($TemplateCsvValidationCheck)
-#endregion
+#endregion ~~< TemplateCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreClusterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreClusterCsvValidation = New-Object System.Windows.Forms.Label
 $DatastoreClusterCsvValidation.Location = New-Object System.Drawing.Point(10, 160)
@@ -1123,7 +1146,7 @@ $DatastoreClusterCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $DatastoreClusterCsvValidation.TabIndex = 14
 $DatastoreClusterCsvValidation.Text = "Datastore Cluster CSV File:"
 $TabDraw.Controls.Add($DatastoreClusterCsvValidation)
-#endregion
+#endregion ~~< DatastoreClusterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreClusterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreClusterCsvValidationCheck = New-Object System.Windows.Forms.Label
 $DatastoreClusterCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 160)
@@ -1131,7 +1154,7 @@ $DatastoreClusterCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20
 $DatastoreClusterCsvValidationCheck.TabIndex = 15
 $DatastoreClusterCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($DatastoreClusterCsvValidationCheck)
-#endregion
+#endregion ~~< DatastoreClusterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreCsvValidation = New-Object System.Windows.Forms.Label
 $DatastoreCsvValidation.Location = New-Object System.Drawing.Point(10, 180)
@@ -1139,7 +1162,7 @@ $DatastoreCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $DatastoreCsvValidation.TabIndex = 16
 $DatastoreCsvValidation.Text = "Datastore CSV File:"
 $TabDraw.Controls.Add($DatastoreCsvValidation)
-#endregion
+#endregion ~~< DatastoreCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DatastoreCsvValidationCheck = New-Object System.Windows.Forms.Label
 $DatastoreCsvValidationCheck.Location = New-Object System.Drawing.Point(180, 180)
@@ -1147,7 +1170,7 @@ $DatastoreCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $DatastoreCsvValidationCheck.TabIndex = 17
 $DatastoreCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($DatastoreCsvValidationCheck)
-#endregion
+#endregion ~~< DatastoreCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VsSwitchCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VsSwitchCsvValidation = New-Object System.Windows.Forms.Label
 $VsSwitchCsvValidation.Location = New-Object System.Drawing.Point(270, 40)
@@ -1155,7 +1178,7 @@ $VsSwitchCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VsSwitchCsvValidation.TabIndex = 18
 $VsSwitchCsvValidation.Text = "VsSwitch CSV File:"
 $TabDraw.Controls.Add($VsSwitchCsvValidation)
-#endregion
+#endregion ~~< VsSwitchCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VsSwitchCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VsSwitchCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VsSwitchCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 40)
@@ -1163,7 +1186,7 @@ $VsSwitchCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VsSwitchCsvValidationCheck.TabIndex = 19
 $VsSwitchCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VsSwitchCsvValidationCheck)
-#endregion
+#endregion ~~< VsSwitchCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPortGroupCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPortGroupCsvValidation = New-Object System.Windows.Forms.Label
 $VssPortGroupCsvValidation.Location = New-Object System.Drawing.Point(270, 60)
@@ -1171,7 +1194,7 @@ $VssPortGroupCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VssPortGroupCsvValidation.TabIndex = 20
 $VssPortGroupCsvValidation.Text = "Vss Port Group CSV File:"
 $TabDraw.Controls.Add($VssPortGroupCsvValidation)
-#endregion
+#endregion ~~< VssPortGroupCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPortGroupCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPortGroupCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VssPortGroupCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 60)
@@ -1179,7 +1202,7 @@ $VssPortGroupCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VssPortGroupCsvValidationCheck.TabIndex = 21
 $VssPortGroupCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VssPortGroupCsvValidationCheck)
-#endregion
+#endregion ~~< VssPortGroupCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssVmkernelCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssVmkernelCsvValidation = New-Object System.Windows.Forms.Label
 $VssVmkernelCsvValidation.Location = New-Object System.Drawing.Point(270, 80)
@@ -1187,7 +1210,7 @@ $VssVmkernelCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VssVmkernelCsvValidation.TabIndex = 22
 $VssVmkernelCsvValidation.Text = "Vss Vmkernel CSV File:"
 $TabDraw.Controls.Add($VssVmkernelCsvValidation)
-#endregion
+#endregion ~~< VssVmkernelCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssVmkernelCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssVmkernelCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VssVmkernelCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 80)
@@ -1195,7 +1218,7 @@ $VssVmkernelCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VssVmkernelCsvValidationCheck.TabIndex = 23
 $VssVmkernelCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VssVmkernelCsvValidationCheck)
-#endregion
+#endregion ~~< VssVmkernelCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPnicCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPnicCsvValidation = New-Object System.Windows.Forms.Label
 $VssPnicCsvValidation.Location = New-Object System.Drawing.Point(270, 100)
@@ -1203,7 +1226,7 @@ $VssPnicCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VssPnicCsvValidation.TabIndex = 24
 $VssPnicCsvValidation.Text = "Vss Pnic CSV File:"
 $TabDraw.Controls.Add($VssPnicCsvValidation)
-#endregion
+#endregion ~~< VssPnicCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPnicCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VssPnicCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VssPnicCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 100)
@@ -1211,7 +1234,7 @@ $VssPnicCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VssPnicCsvValidationCheck.TabIndex = 25
 $VssPnicCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VssPnicCsvValidationCheck)
-#endregion
+#endregion ~~< VssPnicCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdSwitchCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdSwitchCsvValidation = New-Object System.Windows.Forms.Label
 $VdSwitchCsvValidation.Location = New-Object System.Drawing.Point(270, 120)
@@ -1219,7 +1242,7 @@ $VdSwitchCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VdSwitchCsvValidation.TabIndex = 26
 $VdSwitchCsvValidation.Text = "VdSwitch CSV File:"
 $TabDraw.Controls.Add($VdSwitchCsvValidation)
-#endregion
+#endregion ~~< VdSwitchCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdSwitchCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdSwitchCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VdSwitchCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 120)
@@ -1227,7 +1250,7 @@ $VdSwitchCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VdSwitchCsvValidationCheck.TabIndex = 27
 $VdSwitchCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VdSwitchCsvValidationCheck)
-#endregion
+#endregion ~~< VdSwitchCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPortGroupCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPortGroupCsvValidation = New-Object System.Windows.Forms.Label
 $VdsPortGroupCsvValidation.Location = New-Object System.Drawing.Point(270, 140)
@@ -1235,7 +1258,7 @@ $VdsPortGroupCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VdsPortGroupCsvValidation.TabIndex = 28
 $VdsPortGroupCsvValidation.Text = "Vds Port Group CSV File:"
 $TabDraw.Controls.Add($VdsPortGroupCsvValidation)
-#endregion
+#endregion ~~< VdsPortGroupCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPortGroupCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPortGroupCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VdsPortGroupCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 140)
@@ -1243,7 +1266,7 @@ $VdsPortGroupCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VdsPortGroupCsvValidationCheck.TabIndex = 29
 $VdsPortGroupCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VdsPortGroupCsvValidationCheck)
-#endregion
+#endregion ~~< VdsPortGroupCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsVmkernelCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsVmkernelCsvValidation = New-Object System.Windows.Forms.Label
 $VdsVmkernelCsvValidation.Location = New-Object System.Drawing.Point(270, 160)
@@ -1251,7 +1274,7 @@ $VdsVmkernelCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VdsVmkernelCsvValidation.TabIndex = 30
 $VdsVmkernelCsvValidation.Text = "Vds Vmkernel CSV File:"
 $TabDraw.Controls.Add($VdsVmkernelCsvValidation)
-#endregion
+#endregion ~~< VdsVmkernelCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsVmkernelCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsVmkernelCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VdsVmkernelCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 160)
@@ -1259,7 +1282,7 @@ $VdsVmkernelCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VdsVmkernelCsvValidationCheck.TabIndex = 31
 $VdsVmkernelCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VdsVmkernelCsvValidationCheck)
-#endregion
+#endregion ~~< VdsVmkernelCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPnicCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPnicCsvValidation = New-Object System.Windows.Forms.Label
 $VdsPnicCsvValidation.Location = New-Object System.Drawing.Point(270, 180)
@@ -1267,7 +1290,7 @@ $VdsPnicCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $VdsPnicCsvValidation.TabIndex = 32
 $VdsPnicCsvValidation.Text = "Vds Pnic CSV File:"
 $TabDraw.Controls.Add($VdsPnicCsvValidation)
-#endregion
+#endregion ~~< VdsPnicCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPnicCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VdsPnicCsvValidationCheck = New-Object System.Windows.Forms.Label
 $VdsPnicCsvValidationCheck.Location = New-Object System.Drawing.Point(440, 180)
@@ -1275,7 +1298,7 @@ $VdsPnicCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $VdsPnicCsvValidationCheck.TabIndex = 33
 $VdsPnicCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($VdsPnicCsvValidationCheck)
-#endregion
+#endregion ~~< VdsPnicCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< FolderCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $FolderCsvValidation = New-Object System.Windows.Forms.Label
 $FolderCsvValidation.Location = New-Object System.Drawing.Point(530, 40)
@@ -1283,7 +1306,7 @@ $FolderCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $FolderCsvValidation.TabIndex = 34
 $FolderCsvValidation.Text = "Folder CSV File:"
 $TabDraw.Controls.Add($FolderCsvValidation)
-#endregion
+#endregion ~~< FolderCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< FolderCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $FolderCsvValidationCheck = New-Object System.Windows.Forms.Label
 $FolderCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 40)
@@ -1291,7 +1314,7 @@ $FolderCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $FolderCsvValidationCheck.TabIndex = 35
 $FolderCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($FolderCsvValidationCheck)
-#endregion
+#endregion ~~< FolderCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< RdmCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $RdmCsvValidation = New-Object System.Windows.Forms.Label
 $RdmCsvValidation.Location = New-Object System.Drawing.Point(530, 60)
@@ -1299,7 +1322,7 @@ $RdmCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $RdmCsvValidation.TabIndex = 36
 $RdmCsvValidation.Text = "RDM CSV File:"
 $TabDraw.Controls.Add($RdmCsvValidation)
-#endregion
+#endregion ~~< RdmCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< RdmCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $RdmCsvValidationCheck = New-Object System.Windows.Forms.Label
 $RdmCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 60)
@@ -1307,7 +1330,7 @@ $RdmCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $RdmCsvValidationCheck.TabIndex = 37
 $RdmCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($RdmCsvValidationCheck)
-#endregion
+#endregion ~~< RdmCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsRuleCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsRuleCsvValidation = New-Object System.Windows.Forms.Label
 $DrsRuleCsvValidation.Location = New-Object System.Drawing.Point(530, 80)
@@ -1315,7 +1338,7 @@ $DrsRuleCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $DrsRuleCsvValidation.TabIndex = 38
 $DrsRuleCsvValidation.Text = "DRS Rule CSV File:"
 $TabDraw.Controls.Add($DrsRuleCsvValidation)
-#endregion
+#endregion ~~< DrsRuleCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsRuleCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsRuleCsvValidationCheck = New-Object System.Windows.Forms.Label
 $DrsRuleCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 80)
@@ -1323,7 +1346,7 @@ $DrsRuleCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $DrsRuleCsvValidationCheck.TabIndex = 39
 $DrsRuleCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($DrsRuleCsvValidationCheck)
-#endregion
+#endregion ~~< DrsRuleCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsClusterGroupCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsClusterGroupCsvValidation = New-Object System.Windows.Forms.Label
 $DrsClusterGroupCsvValidation.Location = New-Object System.Drawing.Point(530, 100)
@@ -1331,7 +1354,7 @@ $DrsClusterGroupCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $DrsClusterGroupCsvValidation.TabIndex = 40
 $DrsClusterGroupCsvValidation.Text = "DRS Cluster Group CSV File:"
 $TabDraw.Controls.Add($DrsClusterGroupCsvValidation)
-#endregion
+#endregion ~~< DrsClusterGroupCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsClusterGroupCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsClusterGroupCsvValidationCheck = New-Object System.Windows.Forms.Label
 $DrsClusterGroupCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 100)
@@ -1339,7 +1362,7 @@ $DrsClusterGroupCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $DrsClusterGroupCsvValidationCheck.TabIndex = 41
 $DrsClusterGroupCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($DrsClusterGroupCsvValidationCheck)
-#endregion
+#endregion ~~< DrsClusterGroupCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsVmHostRuleCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsVmHostRuleCsvValidation = New-Object System.Windows.Forms.Label
 $DrsVmHostRuleCsvValidation.Location = New-Object System.Drawing.Point(530, 120)
@@ -1347,7 +1370,7 @@ $DrsVmHostRuleCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $DrsVmHostRuleCsvValidation.TabIndex = 42
 $DrsVmHostRuleCsvValidation.Text = "DRS VmHost Rule CSV File:"
 $TabDraw.Controls.Add($DrsVmHostRuleCsvValidation)
-#endregion
+#endregion ~~< DrsVmHostRuleCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrsVmHostRuleCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrsVmHostRuleCsvValidationCheck = New-Object System.Windows.Forms.Label
 $DrsVmHostRuleCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 120)
@@ -1355,7 +1378,7 @@ $DrsVmHostRuleCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $DrsVmHostRuleCsvValidationCheck.TabIndex = 43
 $DrsVmHostRuleCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($DrsVmHostRuleCsvValidationCheck)
-#endregion
+#endregion ~~< DrsVmHostRuleCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ResourcePoolCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ResourcePoolCsvValidation = New-Object System.Windows.Forms.Label
 $ResourcePoolCsvValidation.Location = New-Object System.Drawing.Point(530, 140)
@@ -1363,7 +1386,7 @@ $ResourcePoolCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $ResourcePoolCsvValidation.TabIndex = 44
 $ResourcePoolCsvValidation.Text = "Resource Pool CSV File:"
 $TabDraw.Controls.Add($ResourcePoolCsvValidation)
-#endregion
+#endregion ~~< ResourcePoolCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ResourcePoolCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ResourcePoolCsvValidationCheck = New-Object System.Windows.Forms.Label
 $ResourcePoolCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 140)
@@ -1371,23 +1394,39 @@ $ResourcePoolCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $ResourcePoolCsvValidationCheck.TabIndex = 45
 $ResourcePoolCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($ResourcePoolCsvValidationCheck)
-#endregion
-#region ~~< SnapshotCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< ResourcePoolCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< SnapshotCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SnapshotCsvValidation = New-Object System.Windows.Forms.Label
 $SnapshotCsvValidation.Location = New-Object System.Drawing.Point(530, 160)
 $SnapshotCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
 $SnapshotCsvValidation.TabIndex = 46
 $SnapshotCsvValidation.Text = "Snapshot CSV File:"
 $TabDraw.Controls.Add($SnapshotCsvValidation)
-#endregion
-#region ~~< SnapshotCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< SnapshotCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< SnapshotCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SnapshotCsvValidationCheck = New-Object System.Windows.Forms.Label
 $SnapshotCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 160)
 $SnapshotCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
 $SnapshotCsvValidationCheck.TabIndex = 47
 $SnapshotCsvValidationCheck.Text = ""
 $TabDraw.Controls.Add($SnapshotCsvValidationCheck)
-#endregion
+#endregion ~~< SnapshotCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< LinkedvCenterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$LinkedvCenterCsvValidation = New-Object System.Windows.Forms.Label
+$LinkedvCenterCsvValidation.Location = New-Object System.Drawing.Point(530, 180)
+$LinkedvCenterCsvValidation.Size = New-Object System.Drawing.Size(165, 20)
+$LinkedvCenterCsvValidation.TabIndex = 48
+$LinkedvCenterCsvValidation.Text = "Linked vCenter CSV File:"
+$TabDraw.Controls.Add($LinkedvCenterCsvValidation)
+#endregion ~~< LinkedvCenterCsvValidation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< LinkedvCenterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$LinkedvCenterCsvValidationCheck = New-Object System.Windows.Forms.Label
+$LinkedvCenterCsvValidationCheck.Location = New-Object System.Drawing.Point(700, 180)
+$LinkedvCenterCsvValidationCheck.Size = New-Object System.Drawing.Size(90, 20)
+$LinkedvCenterCsvValidationCheck.TabIndex = 3
+$LinkedvCenterCsvValidationCheck.Text = ""
+$TabDraw.Controls.Add($LinkedvCenterCsvValidationCheck)
+#endregion ~~< LinkedvCenterCsvValidationCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CsvValidationButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CsvValidationButton = New-Object System.Windows.Forms.Button
 $CsvValidationButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -1398,341 +1437,360 @@ $CsvValidationButton.Text = "Check for CSVs"
 $CsvValidationButton.UseVisualStyleBackColor = $false
 $CsvValidationButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($CsvValidationButton)
-#endregion
-#endregion
+#endregion ~~< CsvValidationButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< CSV Validation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Output >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VisioOutputLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VisioOutputLabel = New-Object System.Windows.Forms.Label
 $VisioOutputLabel.Font = New-Object System.Drawing.Font("Tahoma", 15.0, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Point, ([System.Byte](0)))
 $VisioOutputLabel.Location = New-Object System.Drawing.Point(10, 230)
 $VisioOutputLabel.Size = New-Object System.Drawing.Size(215, 25)
-$VisioOutputLabel.TabIndex = 46
+$VisioOutputLabel.TabIndex = 49
 $VisioOutputLabel.Text = "Visio Output Folder:"
 $TabDraw.Controls.Add($VisioOutputLabel)
-#endregion
+#endregion ~~< VisioOutputLabel >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VisioOpenOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VisioOpenOutputButton = New-Object System.Windows.Forms.Button
 $VisioOpenOutputButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
 $VisioOpenOutputButton.Location = New-Object System.Drawing.Point(230, 230)
 $VisioOpenOutputButton.Size = New-Object System.Drawing.Size(740, 25)
-$VisioOpenOutputButton.TabIndex = 47
+$VisioOpenOutputButton.TabIndex = 50
 $VisioOpenOutputButton.Text = "Select Visio Output Folder"
 $VisioOpenOutputButton.UseVisualStyleBackColor = $false
 $VisioOpenOutputButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($VisioOpenOutputButton)
-#endregion
+#endregion ~~< VisioOpenOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VisioBrowse >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VisioBrowse = New-Object System.Windows.Forms.FolderBrowserDialog
 $VisioBrowse.Description = "Select a directory"
 $VisioBrowse.RootFolder = [System.Environment+SpecialFolder]::MyComputer
-#endregion
-#endregion
+#endregion ~~< VisioBrowse >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Output >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CheckBoxes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< vCenter_to_LinkedvCenter_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$vCenter_to_LinkedvCenter_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
+$vCenter_to_LinkedvCenter_DrawCheckBox.Checked = $true
+$vCenter_to_LinkedvCenter_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
+$vCenter_to_LinkedvCenter_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 260)
+$vCenter_to_LinkedvCenter_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
+$vCenter_to_LinkedvCenter_DrawCheckBox.TabIndex = 51
+$vCenter_to_LinkedvCenter_DrawCheckBox.Text = "Create vCenter to Linked vCenter Visio Drawing"
+$vCenter_to_LinkedvCenter_DrawCheckBox.UseVisualStyleBackColor = $true
+$TabDraw.Controls.Add($vCenter_to_LinkedvCenter_DrawCheckBox)
+#endregion ~~< vCenter_to_LinkedvCenter_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< vCenter_to_LinkedvCenter_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$vCenter_to_LinkedvCenter_Complete = New-Object System.Windows.Forms.Label
+$vCenter_to_LinkedvCenter_Complete.Location = New-Object System.Drawing.Point(315, 260)
+$vCenter_to_LinkedvCenter_Complete.Size = New-Object System.Drawing.Size(90, 20)
+$vCenter_to_LinkedvCenter_Complete.TabIndex = 52
+$vCenter_to_LinkedvCenter_Complete.Text = ""
+$TabDraw.Controls.Add($vCenter_to_LinkedvCenter_Complete)
+#endregion ~~< vCenter_to_LinkedvCenter_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_Host_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VM_to_Host_DrawCheckBox.Checked = $true
 $VM_to_Host_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VM_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 260)
+$VM_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 280)
 $VM_to_Host_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$VM_to_Host_DrawCheckBox.TabIndex = 48
+$VM_to_Host_DrawCheckBox.TabIndex = 53
 $VM_to_Host_DrawCheckBox.Text = "Create VM to Host Visio Drawing"
 $VM_to_Host_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VM_to_Host_DrawCheckBox)
-#endregion
+#endregion ~~< VM_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_Host_Complete = New-Object System.Windows.Forms.Label
-$VM_to_Host_Complete.Location = New-Object System.Drawing.Point(315, 260)
+$VM_to_Host_Complete.Location = New-Object System.Drawing.Point(315, 280)
 $VM_to_Host_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VM_to_Host_Complete.TabIndex = 49
+$VM_to_Host_Complete.TabIndex = 54
 $VM_to_Host_Complete.Text = ""
 $TabDraw.Controls.Add($VM_to_Host_Complete)
-#endregion
+#endregion ~~< VM_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Folder_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_Folder_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VM_to_Folder_DrawCheckBox.Checked = $true
 $VM_to_Folder_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VM_to_Folder_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 280)
+$VM_to_Folder_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 300)
 $VM_to_Folder_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$VM_to_Folder_DrawCheckBox.TabIndex = 50
+$VM_to_Folder_DrawCheckBox.TabIndex = 55
 $VM_to_Folder_DrawCheckBox.Text = "Create VM to Folder Visio Drawing"
 $VM_to_Folder_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VM_to_Folder_DrawCheckBox)
-#endregion
+#endregion ~~< VM_to_Folder_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Folder_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_Folder_Complete = New-Object System.Windows.Forms.Label
-$VM_to_Folder_Complete.Location = New-Object System.Drawing.Point(315, 280)
+$VM_to_Folder_Complete.Location = New-Object System.Drawing.Point(315, 300)
 $VM_to_Folder_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VM_to_Folder_Complete.TabIndex = 51
+$VM_to_Folder_Complete.TabIndex = 56
 $VM_to_Folder_Complete.Text = ""
 $TabDraw.Controls.Add($VM_to_Folder_Complete)
-#endregion
+#endregion ~~< VM_to_Folder_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMs_with_RDMs_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VMs_with_RDMs_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VMs_with_RDMs_DrawCheckBox.Checked = $true
 $VMs_with_RDMs_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VMs_with_RDMs_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 300)
+$VMs_with_RDMs_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 320)
 $VMs_with_RDMs_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$VMs_with_RDMs_DrawCheckBox.TabIndex = 52
+$VMs_with_RDMs_DrawCheckBox.TabIndex = 57
 $VMs_with_RDMs_DrawCheckBox.Text = "Create VMs with RDMs Visio Drawing"
 $VMs_with_RDMs_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VMs_with_RDMs_DrawCheckBox)
-#endregion
+#endregion ~~< VMs_with_RDMs_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMs_with_RDMs_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VMs_with_RDMs_Complete = New-Object System.Windows.Forms.Label
-$VMs_with_RDMs_Complete.Location = New-Object System.Drawing.Point(315, 300)
+$VMs_with_RDMs_Complete.Location = New-Object System.Drawing.Point(315, 320)
 $VMs_with_RDMs_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VMs_with_RDMs_Complete.TabIndex = 53
+$VMs_with_RDMs_Complete.TabIndex = 58
 $VMs_with_RDMs_Complete.Text = ""
 $TabDraw.Controls.Add($VMs_with_RDMs_Complete)
-#endregion
+#endregion ~~< VMs_with_RDMs_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< SRM_Protected_VMs_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SRM_Protected_VMs_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $SRM_Protected_VMs_DrawCheckBox.Checked = $true
 $SRM_Protected_VMs_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$SRM_Protected_VMs_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 320)
+$SRM_Protected_VMs_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 340)
 $SRM_Protected_VMs_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$SRM_Protected_VMs_DrawCheckBox.TabIndex = 54
+$SRM_Protected_VMs_DrawCheckBox.TabIndex = 59
 $SRM_Protected_VMs_DrawCheckBox.Text = "Create SRM Protected VMs Visio Drawing"
 $SRM_Protected_VMs_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($SRM_Protected_VMs_DrawCheckBox)
-#endregion
+#endregion ~~< SRM_Protected_VMs_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< SRM_Protected_VMs_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SRM_Protected_VMs_Complete = New-Object System.Windows.Forms.Label
-$SRM_Protected_VMs_Complete.Location = New-Object System.Drawing.Point(315, 320)
+$SRM_Protected_VMs_Complete.Location = New-Object System.Drawing.Point(315, 340)
 $SRM_Protected_VMs_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$SRM_Protected_VMs_Complete.TabIndex = 55
+$SRM_Protected_VMs_Complete.TabIndex = 60
 $SRM_Protected_VMs_Complete.Text = ""
 $TabDraw.Controls.Add($SRM_Protected_VMs_Complete)
-#endregion
+#endregion ~~< SRM_Protected_VMs_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Datastore_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_Datastore_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VM_to_Datastore_DrawCheckBox.Checked = $true
 $VM_to_Datastore_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VM_to_Datastore_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 340)
+$VM_to_Datastore_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 360)
 $VM_to_Datastore_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$VM_to_Datastore_DrawCheckBox.TabIndex = 56
+$VM_to_Datastore_DrawCheckBox.TabIndex = 61
 $VM_to_Datastore_DrawCheckBox.Text = "Create VM to Datastore Visio Drawing"
 $VM_to_Datastore_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VM_to_Datastore_DrawCheckBox)
-#endregion
+#endregion ~~< VM_to_Datastore_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Datastore_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_Datastore_Complete = New-Object System.Windows.Forms.Label
-$VM_to_Datastore_Complete.Location = New-Object System.Drawing.Point(315, 340)
+$VM_to_Datastore_Complete.Location = New-Object System.Drawing.Point(315, 360)
 $VM_to_Datastore_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VM_to_Datastore_Complete.TabIndex = 57
+$VM_to_Datastore_Complete.TabIndex = 62
 $VM_to_Datastore_Complete.Text = ""
 $TabDraw.Controls.Add($VM_to_Datastore_Complete)
-#endregion
+#endregion ~~< VM_to_Datastore_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_ResourcePool_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_ResourcePool_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VM_to_ResourcePool_DrawCheckBox.Checked = $true
 $VM_to_ResourcePool_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VM_to_ResourcePool_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 360)
+$VM_to_ResourcePool_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 380)
 $VM_to_ResourcePool_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$VM_to_ResourcePool_DrawCheckBox.TabIndex = 58
+$VM_to_ResourcePool_DrawCheckBox.TabIndex = 63
 $VM_to_ResourcePool_DrawCheckBox.Text = "Create VM to ResourcePool Visio Drawing"
 $VM_to_ResourcePool_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VM_to_ResourcePool_DrawCheckBox)
-#endregion
+#endregion ~~< VM_to_ResourcePool_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_ResourcePool_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VM_to_ResourcePool_Complete = New-Object System.Windows.Forms.Label
-$VM_to_ResourcePool_Complete.Location = New-Object System.Drawing.Point(315, 360)
+$VM_to_ResourcePool_Complete.Location = New-Object System.Drawing.Point(315, 380)
 $VM_to_ResourcePool_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VM_to_ResourcePool_Complete.TabIndex = 59
+$VM_to_ResourcePool_Complete.TabIndex = 64
 $VM_to_ResourcePool_Complete.Text = ""
 $TabDraw.Controls.Add($VM_to_ResourcePool_Complete)
-#endregion
+#endregion ~~< VM_to_ResourcePool_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Datastore_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $Datastore_to_Host_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $Datastore_to_Host_DrawCheckBox.Checked = $true
 $Datastore_to_Host_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$Datastore_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 380)
+$Datastore_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 400)
 $Datastore_to_Host_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$Datastore_to_Host_DrawCheckBox.TabIndex = 60
+$Datastore_to_Host_DrawCheckBox.TabIndex = 65
 $Datastore_to_Host_DrawCheckBox.Text = "Create Datastore to Host Visio Drawing"
 $Datastore_to_Host_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($Datastore_to_Host_DrawCheckBox)
-#endregion
+#endregion ~~< Datastore_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Datastore_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $Datastore_to_Host_Complete = New-Object System.Windows.Forms.Label
-$Datastore_to_Host_Complete.Location = New-Object System.Drawing.Point(315, 380)
+$Datastore_to_Host_Complete.Location = New-Object System.Drawing.Point(315, 400)
 $Datastore_to_Host_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$Datastore_to_Host_Complete.TabIndex = 61
+$Datastore_to_Host_Complete.TabIndex = 66
 $Datastore_to_Host_Complete.Text = ""
 $TabDraw.Controls.Add($Datastore_to_Host_Complete)
-#endregion
+#endregion ~~< Datastore_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Snapshot_to_VM_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$Snapshot_to_VM_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
+$Snapshot_to_VM_DrawCheckBox.Checked = $true
+$Snapshot_to_VM_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
+$Snapshot_to_VM_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 420)
+$Snapshot_to_VM_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
+$Snapshot_to_VM_DrawCheckBox.TabIndex = 67
+$Snapshot_to_VM_DrawCheckBox.Text = "Create Snapshot to VM Visio Drawing"
+$Snapshot_to_VM_DrawCheckBox.UseVisualStyleBackColor = $true
+$TabDraw.Controls.Add($Snapshot_to_VM_DrawCheckBox)
+#endregion ~~< Snapshot_to_VM_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Snapshot_to_VM_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$Snapshot_to_VM_Complete = New-Object System.Windows.Forms.Label
+$Snapshot_to_VM_Complete.Location = New-Object System.Drawing.Point(315, 420)
+$Snapshot_to_VM_Complete.Size = New-Object System.Drawing.Size(90, 20)
+$Snapshot_to_VM_Complete.TabIndex = 68
+$Snapshot_to_VM_Complete.Text = ""
+$TabDraw.Controls.Add($Snapshot_to_VM_Complete)
+#endregion ~~< Snapshot_to_VM_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PhysicalNIC_to_vSwitch_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PhysicalNIC_to_vSwitch_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $PhysicalNIC_to_vSwitch_DrawCheckBox.Checked = $true
 $PhysicalNIC_to_vSwitch_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$PhysicalNIC_to_vSwitch_DrawCheckBox.Location = New-Object System.Drawing.Point(10, 400)
+$PhysicalNIC_to_vSwitch_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 260)
 $PhysicalNIC_to_vSwitch_DrawCheckBox.Size = New-Object System.Drawing.Size(300, 20)
-$PhysicalNIC_to_vSwitch_DrawCheckBox.TabIndex = 62
+$PhysicalNIC_to_vSwitch_DrawCheckBox.TabIndex = 69
 $PhysicalNIC_to_vSwitch_DrawCheckBox.Text = "Create PhysicalNIC to vSwitch Visio Drawing"
 $PhysicalNIC_to_vSwitch_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($PhysicalNIC_to_vSwitch_DrawCheckBox)
-#endregion
+#endregion ~~< PhysicalNIC_to_vSwitch_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PhysicalNIC_to_vSwitch_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PhysicalNIC_to_vSwitch_Complete = New-Object System.Windows.Forms.Label
-$PhysicalNIC_to_vSwitch_Complete.Location = New-Object System.Drawing.Point(315, 400)
+$PhysicalNIC_to_vSwitch_Complete.Location = New-Object System.Drawing.Point(760, 260)
 $PhysicalNIC_to_vSwitch_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$PhysicalNIC_to_vSwitch_Complete.TabIndex = 63
+$PhysicalNIC_to_vSwitch_Complete.TabIndex = 70
 $PhysicalNIC_to_vSwitch_Complete.Text = ""
 $TabDraw.Controls.Add($PhysicalNIC_to_vSwitch_Complete)
-#endregion
+#endregion ~~< PhysicalNIC_to_vSwitch_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VSS_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VSS_to_Host_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VSS_to_Host_DrawCheckBox.Checked = $true
 $VSS_to_Host_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VSS_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 260)
+$VSS_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 280)
 $VSS_to_Host_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$VSS_to_Host_DrawCheckBox.TabIndex = 64
+$VSS_to_Host_DrawCheckBox.TabIndex = 71
 $VSS_to_Host_DrawCheckBox.Text = "Create VSS to Host Visio Drawing"
 $VSS_to_Host_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VSS_to_Host_DrawCheckBox)
-#endregion
+#endregion ~~< VSS_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VSS_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VSS_to_Host_Complete = New-Object System.Windows.Forms.Label
-$VSS_to_Host_Complete.Location = New-Object System.Drawing.Point(760, 260)
+$VSS_to_Host_Complete.Location = New-Object System.Drawing.Point(760, 280)
 $VSS_to_Host_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VSS_to_Host_Complete.TabIndex = 65
+$VSS_to_Host_Complete.TabIndex = 72
 $VSS_to_Host_Complete.Text = ""
 $TabDraw.Controls.Add($VSS_to_Host_Complete)
-#endregion
+#endregion ~~< VSS_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMK_to_VSS_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VMK_to_VSS_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VMK_to_VSS_DrawCheckBox.Checked = $true
 $VMK_to_VSS_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VMK_to_VSS_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 280)
+$VMK_to_VSS_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 300)
 $VMK_to_VSS_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$VMK_to_VSS_DrawCheckBox.TabIndex = 66
+$VMK_to_VSS_DrawCheckBox.TabIndex = 73
 $VMK_to_VSS_DrawCheckBox.Text = "Create Vmkernel to VSS Visio Drawing"
 $VMK_to_VSS_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VMK_to_VSS_DrawCheckBox)
-#endregion
+#endregion ~~< VMK_to_VSS_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMK_to_VSS_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VMK_to_VSS_Complete = New-Object System.Windows.Forms.Label
-$VMK_to_VSS_Complete.Location = New-Object System.Drawing.Point(760, 280)
+$VMK_to_VSS_Complete.Location = New-Object System.Drawing.Point(760, 300)
 $VMK_to_VSS_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VMK_to_VSS_Complete.TabIndex = 67
+$VMK_to_VSS_Complete.TabIndex = 74
 $VMK_to_VSS_Complete.Text = ""
 $TabDraw.Controls.Add($VMK_to_VSS_Complete)
-#endregion
+#endregion ~~< VMK_to_VSS_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VSSPortGroup_to_VM_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VSSPortGroup_to_VM_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VSSPortGroup_to_VM_DrawCheckBox.Checked = $true
 $VSSPortGroup_to_VM_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VSSPortGroup_to_VM_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 300)
+$VSSPortGroup_to_VM_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 320)
 $VSSPortGroup_to_VM_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$VSSPortGroup_to_VM_DrawCheckBox.TabIndex = 68
+$VSSPortGroup_to_VM_DrawCheckBox.TabIndex = 75
 $VSSPortGroup_to_VM_DrawCheckBox.Text = "Create Vss Port Group to VM Visio Drawing"
 $VSSPortGroup_to_VM_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VSSPortGroup_to_VM_DrawCheckBox)
-#endregion
+#endregion ~~< VSSPortGroup_to_VM_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VSSPortGroup_to_VM_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VSSPortGroup_to_VM_Complete = New-Object System.Windows.Forms.Label
-$VSSPortGroup_to_VM_Complete.Location = New-Object System.Drawing.Point(760, 300)
+$VSSPortGroup_to_VM_Complete.Location = New-Object System.Drawing.Point(760, 320)
 $VSSPortGroup_to_VM_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VSSPortGroup_to_VM_Complete.TabIndex = 69
+$VSSPortGroup_to_VM_Complete.TabIndex = 76
 $VSSPortGroup_to_VM_Complete.Text = ""
 $TabDraw.Controls.Add($VSSPortGroup_to_VM_Complete)
-#endregion
+#endregion ~~< VSSPortGroup_to_VM_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VDS_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VDS_to_Host_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VDS_to_Host_DrawCheckBox.Checked = $true
 $VDS_to_Host_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VDS_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 320)
+$VDS_to_Host_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 340)
 $VDS_to_Host_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$VDS_to_Host_DrawCheckBox.TabIndex = 70
+$VDS_to_Host_DrawCheckBox.TabIndex = 77
 $VDS_to_Host_DrawCheckBox.Text = "Create VDS to Host Visio Drawing"
 $VDS_to_Host_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VDS_to_Host_DrawCheckBox)
-#endregion
+#endregion ~~< VDS_to_Host_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VDS_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VDS_to_Host_Complete = New-Object System.Windows.Forms.Label
-$VDS_to_Host_Complete.Location = New-Object System.Drawing.Point(760, 320)
+$VDS_to_Host_Complete.Location = New-Object System.Drawing.Point(760, 340)
 $VDS_to_Host_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VDS_to_Host_Complete.TabIndex = 71
+$VDS_to_Host_Complete.TabIndex = 78
 $VDS_to_Host_Complete.Text = ""
 $TabDraw.Controls.Add($VDS_to_Host_Complete)
-#endregion
+#endregion ~~< VDS_to_Host_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMK_to_VDS_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VMK_to_VDS_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VMK_to_VDS_DrawCheckBox.Checked = $true
 $VMK_to_VDS_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VMK_to_VDS_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 340)
+$VMK_to_VDS_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 360)
 $VMK_to_VDS_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$VMK_to_VDS_DrawCheckBox.TabIndex = 72
+$VMK_to_VDS_DrawCheckBox.TabIndex = 79
 $VMK_to_VDS_DrawCheckBox.Text = "Create Vmkernel to VDS Visio Drawing"
 $VMK_to_VDS_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VMK_to_VDS_DrawCheckBox)
-#endregion
+#endregion ~~< VMK_to_VDS_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMK_to_VDS_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VMK_to_VDS_Complete = New-Object System.Windows.Forms.Label
-$VMK_to_VDS_Complete.Location = New-Object System.Drawing.Point(760, 340)
+$VMK_to_VDS_Complete.Location = New-Object System.Drawing.Point(760, 360)
 $VMK_to_VDS_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VMK_to_VDS_Complete.TabIndex = 73
+$VMK_to_VDS_Complete.TabIndex = 80
 $VMK_to_VDS_Complete.Text = ""
 $TabDraw.Controls.Add($VMK_to_VDS_Complete)
-#endregion
+#endregion ~~< VMK_to_VDS_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VDSPortGroup_to_VM_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VDSPortGroup_to_VM_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $VDSPortGroup_to_VM_DrawCheckBox.Checked = $true
 $VDSPortGroup_to_VM_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$VDSPortGroup_to_VM_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 360)
+$VDSPortGroup_to_VM_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 380)
 $VDSPortGroup_to_VM_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$VDSPortGroup_to_VM_DrawCheckBox.TabIndex = 74
+$VDSPortGroup_to_VM_DrawCheckBox.TabIndex = 81
 $VDSPortGroup_to_VM_DrawCheckBox.Text = "Create Vds Port Group to VM Visio Drawing"
 $VDSPortGroup_to_VM_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($VDSPortGroup_to_VM_DrawCheckBox)
-#endregion
+#endregion ~~< VDSPortGroup_to_VM_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VDSPortGroup_to_VM_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VDSPortGroup_to_VM_Complete = New-Object System.Windows.Forms.Label
-$VDSPortGroup_to_VM_Complete.Location = New-Object System.Drawing.Point(760, 360)
+$VDSPortGroup_to_VM_Complete.Location = New-Object System.Drawing.Point(760, 380)
 $VDSPortGroup_to_VM_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$VDSPortGroup_to_VM_Complete.TabIndex = 75
+$VDSPortGroup_to_VM_Complete.TabIndex = 82
 $VDSPortGroup_to_VM_Complete.Text = ""
 $TabDraw.Controls.Add($VDSPortGroup_to_VM_Complete)
-#endregion
+#endregion ~~< VDSPortGroup_to_VM_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Cluster_to_DRS_Rule_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $Cluster_to_DRS_Rule_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
 $Cluster_to_DRS_Rule_DrawCheckBox.Checked = $true
 $Cluster_to_DRS_Rule_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$Cluster_to_DRS_Rule_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 380)
+$Cluster_to_DRS_Rule_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 400)
 $Cluster_to_DRS_Rule_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$Cluster_to_DRS_Rule_DrawCheckBox.TabIndex = 76
+$Cluster_to_DRS_Rule_DrawCheckBox.TabIndex = 83
 $Cluster_to_DRS_Rule_DrawCheckBox.Text = "Create Cluster to DRS Rule Visio Drawing"
 $Cluster_to_DRS_Rule_DrawCheckBox.UseVisualStyleBackColor = $true
 $TabDraw.Controls.Add($Cluster_to_DRS_Rule_DrawCheckBox)
-#endregion
+#endregion ~~< Cluster_to_DRS_Rule_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Cluster_to_DRS_Rule_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $Cluster_to_DRS_Rule_Complete = New-Object System.Windows.Forms.Label
-$Cluster_to_DRS_Rule_Complete.Location = New-Object System.Drawing.Point(760, 380)
+$Cluster_to_DRS_Rule_Complete.Location = New-Object System.Drawing.Point(760, 400)
 $Cluster_to_DRS_Rule_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$Cluster_to_DRS_Rule_Complete.TabIndex = 77
+$Cluster_to_DRS_Rule_Complete.TabIndex = 84
 $Cluster_to_DRS_Rule_Complete.Text = ""
 $TabDraw.Controls.Add($Cluster_to_DRS_Rule_Complete)
-#endregion
-#region ~~< Snapshot_to_VM_DrawCheckBox >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-$Snapshot_to_VM_DrawCheckBox = New-Object System.Windows.Forms.CheckBox
-$Snapshot_to_VM_DrawCheckBox.Checked = $true
-$Snapshot_to_VM_DrawCheckBox.CheckState = [System.Windows.Forms.CheckState]::Checked
-$Snapshot_to_VM_DrawCheckBox.Location = New-Object System.Drawing.Point(425, 400)
-$Snapshot_to_VM_DrawCheckBox.Size = New-Object System.Drawing.Size(330, 20)
-$Snapshot_to_VM_DrawCheckBox.TabIndex = 78
-$Snapshot_to_VM_DrawCheckBox.Text = "Create Snapshot to VM Visio Drawing"
-$Snapshot_to_VM_DrawCheckBox.UseVisualStyleBackColor = $true
-$TabDraw.Controls.Add($Snapshot_to_VM_DrawCheckBox)
-#endregion
-#region ~~< Snapshot_to_VM_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-$Snapshot_to_VM_Complete = New-Object System.Windows.Forms.Label
-$Snapshot_to_VM_Complete.Location = New-Object System.Drawing.Point(760, 400)
-$Snapshot_to_VM_Complete.Size = New-Object System.Drawing.Size(90, 20)
-$Snapshot_to_VM_Complete.TabIndex = 79
-$Snapshot_to_VM_Complete.Text = ""
-$TabDraw.Controls.Add($Snapshot_to_VM_Complete)
-#endregion
-#endregion
+#endregion ~~< Cluster_to_DRS_Rule_Complete >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< CheckBoxes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Buttons >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawUncheckButton = New-Object System.Windows.Forms.Button
@@ -1744,7 +1802,7 @@ $DrawUncheckButton.Text = "Uncheck All"
 $DrawUncheckButton.UseVisualStyleBackColor = $false
 $DrawUncheckButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($DrawUncheckButton)
-#endregion
+#endregion ~~< DrawUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawCheckButton = New-Object System.Windows.Forms.Button
 $DrawCheckButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -1755,7 +1813,7 @@ $DrawCheckButton.Text = "Check All"
 $DrawCheckButton.UseVisualStyleBackColor = $false
 $DrawCheckButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($DrawCheckButton)
-#endregion
+#endregion ~~< DrawCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawButton = New-Object System.Windows.Forms.Button
 $DrawButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -1766,7 +1824,7 @@ $DrawButton.Text = "Draw Visio"
 $DrawButton.UseVisualStyleBackColor = $false
 $DrawButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($DrawButton)
-#endregion
+#endregion ~~< DrawButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< OpenVisioButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $OpenVisioButton = New-Object System.Windows.Forms.Button
 $OpenVisioButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
@@ -1777,20 +1835,20 @@ $OpenVisioButton.Text = "Open Visio Drawing"
 $OpenVisioButton.UseVisualStyleBackColor = $false
 $OpenVisioButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($OpenVisioButton)
-#endregion
-#endregion
+#endregion ~~< OpenVisioButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Buttons >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SubTab.Controls.Add($TabDraw)
-#endregion
+#endregion ~~< TabDraw >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $SubTab.ForeColor = [System.Drawing.SystemColors]::ControlText
 $SubTab.SelectedIndex = 0
 $vDiagram.Controls.Add($SubTab)
-#endregion
+#endregion ~~< SubTab >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $vDiagram.Controls.Add($MainMenu)
-#endregion
-#endregion
-#endregion
+#endregion ~~< MainMenu >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< vDiagram >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Form Creation >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#region Custom Code
+#region ~~< Custom Code >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Checks >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowershellCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowershellCheck = $PSVersionTable.PSVersion
@@ -1804,7 +1862,7 @@ else
 	$PowershellInstalled.Forecolor = "Red"
 	$PowershellInstalled.Text = "Not installed or Powershell version lower than 4"
 }
-#endregion
+#endregion ~~< PowershellCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCliModuleCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowerCliModuleCheck = (Get-Module VMware.PowerCLI -ListAvailable | Where-Object { $_.Name -eq "VMware.PowerCLI" })
 $PowerCliModuleVersion = ($PowerCliModuleCheck.Version)
@@ -1818,7 +1876,7 @@ else
 	$PowerCliModuleInstalled.Forecolor = "Red"
 	$PowerCliModuleInstalled.Text = "Not Installed"
 }
-#endregion
+#endregion ~~< PowerCliModuleCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PowerCliCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if ((Get-PSSnapin -registered | Where-Object { $_.Name -eq "VMware.VimAutomation.Core" }) -ne $null)
 {
@@ -1835,7 +1893,7 @@ else
 	$PowerCliInstalled.Forecolor = "Red"
 	$PowerCliInstalled.Text = "PowerCLI or PowerCli Module not installed"
 }
-#endregion
+#endregion ~~< PowerCliCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VisioCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if ((Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object {$_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*"} | Select-Object DisplayName) -or (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object {$_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*"} | Select-Object DisplayName) -ne $null)
 {
@@ -1847,8 +1905,8 @@ else
 	$VisioInstalled.Forecolor = "Red"
 	$VisioInstalled.Text = "Visio is Not Installed"
 }
-#endregion
-#endregion
+#endregion ~~< VisioCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Checks >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Buttons >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< ConnectButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $ConnectButton.Add_MouseClick({ $Connected = Get-View $DefaultViserver.ExtensionData.Client.ServiceContent.SessionManager ; 
@@ -1864,7 +1922,7 @@ $ConnectButton.Add_MouseClick({ $Connected = Get-View $DefaultViserver.Extension
 	}
 } )
 $ConnectButton.Add_Click({ Connect_vCenter })
-#endregion
+#endregion ~~< ConnectButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureCsvOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureCsvOutputButton.Add_Click( { Find_CaptureCsvFolder ; 
 	if ($CaptureCsvFolder -eq $null) 
@@ -1879,7 +1937,7 @@ $CaptureCsvOutputButton.Add_Click( { Find_CaptureCsvFolder ;
 	}
 	Check_CaptureCsvFolder
 } )
-#endregion
+#endregion ~~< CaptureCsvOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureUncheckButton.Add_Click({ $vCenterCsvCheckBox.CheckState = "UnChecked" ;
 	$DatacenterCsvCheckBox.CheckState = "UnChecked" ;
@@ -1903,9 +1961,10 @@ $CaptureUncheckButton.Add_Click({ $vCenterCsvCheckBox.CheckState = "UnChecked" ;
 	$DrsClusterGroupCsvCheckBox.CheckState = "UnChecked" ;
 	$DrsVmHostRuleCsvCheckBox.CheckState = "UnChecked" ;
 	$ResourcePoolCsvCheckBox.CheckState = "UnChecked";
-	$SnapshotCsvCheckBox.CheckState = "UnChecked"	
+	$SnapshotCsvCheckBox.CheckState = "UnChecked";
+	$LinkedvCenterCsvCheckBox.CheckState = "UnChecked"	
 } )
-#endregion
+#endregion ~~< CaptureUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureCheckButton.Add_Click({ $vCenterCsvCheckBox.CheckState = "Checked" ;
 	$DatacenterCsvCheckBox.CheckState = "Checked" ;
@@ -1929,9 +1988,10 @@ $CaptureCheckButton.Add_Click({ $vCenterCsvCheckBox.CheckState = "Checked" ;
 	$DrsClusterGroupCsvCheckBox.CheckState = "Checked" ;
 	$DrsVmHostRuleCsvCheckBox.CheckState = "Checked" ;
 	$ResourcePoolCsvCheckBox.CheckState = "Checked";
-	$SnapshotCsvCheckBox.CheckState = "Checked"
+	$SnapshotCsvCheckBox.CheckState = "Checked";
+	$LinkedvCenterCsvCheckBox.CheckState = "Checked"
 })
-#endregion
+#endregion ~~< CaptureCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CaptureButton.Add_Click({
 	if($CaptureCsvFolder -eq $null)
@@ -2383,13 +2443,32 @@ $CaptureButton.Add_Click({
 				$SnapshotCsvValidationComplete.Text = "Not Complete"
 			}
 		}
+		if ($LinkedvCenterCsvCheckBox.Checked -eq "True")
+		{
+			$LinkedvCenterCsvValidationComplete.Forecolor = "Blue"
+			$LinkedvCenterCsvValidationComplete.Text = "Processing ....."
+			Linked_vCenter_Export
+			$CsvCompleteDir = $CaptureCsvFolder + "\" + $VcenterTextBox.Text
+			$LinkedvCenterExportFileComplete = $CsvCompleteDir + "-LinkedvCenterExport.csv"
+			$LinkedvCenterCsvComplete = Test-Path $LinkedvCenterExportFileComplete
+			if ($LinkedvCenterCsvComplete -eq $True)
+			{
+				$LinkedvCenterCsvValidationComplete.Forecolor = "Green"
+				$LinkedvCenterCsvValidationComplete.Text = "Complete"
+			}
+			else
+			{
+				$LinkedvCenterCsvValidationComplete.Forecolor = "Red"
+				$LinkedvCenterCsvValidationComplete.Text = "Not Complete"
+			}
+		}
 		Disconnect_vCenter
 		$ConnectButton.Forecolor = [System.Drawing.Color]::Red
 		$ConnectButton.Text = "Disconnected"
 		$CaptureButton.Forecolor = [System.Drawing.Color]::Green ; $CaptureButton.Text = "CSV Collection Complete"
 	}
 })
-#endregion
+#endregion ~~< CaptureButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CaptureOpenOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $OpenCaptureButton.Add_Click({Open_Capture_Folder;
 	$VcenterTextBox.Text = "" ;
@@ -2448,10 +2527,12 @@ $OpenCaptureButton.Add_Click({Open_Capture_Folder;
 	$ResourcePoolCsvCheckBox.CheckState = "Checked" ;
 	$SnapshotCsvValidationComplete.Text = "" ;
 	$SnapshotCsvCheckBox.CheckState = "Checked" ;
+	$LinkedvCenterCsvValidationComplete.Text = "" ;
+	$LinkedvCenterCsvCheckBox.CheckState = "Checked" ;
 	$ConnectButton.Forecolor = [System.Drawing.Color]::Black ;
 	$ConnectButton.Text = "Connect to vCenter"
 })
-#endregion
+#endregion ~~< CaptureOpenOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawCsvInputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawCsvInputButton.Add_MouseClick({ Find_DrawCsvFolder ;
 	if ($DrawCsvFolder -eq $null)
@@ -2466,7 +2547,7 @@ $DrawCsvInputButton.Add_MouseClick({ Find_DrawCsvFolder ;
 	}
 } )
 $TabDraw.Controls.Add($DrawCsvInputButton)
-#endregion
+#endregion ~~< DrawCsvInputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CsvValidationButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CsvValidationButton.Add_Click(
 {
@@ -2825,9 +2906,25 @@ $CsvValidationButton.Add_Click(
 		$SnapshotCsvValidationCheck.Text = "Not Present"
 		$Snapshot_to_VM_DrawCheckBox.CheckState = "UnChecked"
 	}
+	
+	$LinkedvCenterExportFile = $CsvInputDir + "-LinkedvCenterExport.csv"
+	$LinkedvCenterCsvExists = Test-Path $LinkedvCenterExportFile
+	$TabDraw.Controls.Add($LinkedvCenterCsvValidationCheck)
+			
+	if ($LinkedvCenterCsvExists -eq $True)
+	{
+		$LinkedvCenterCsvValidationCheck.Forecolor = "Green"
+		$LinkedvCenterCsvValidationCheck.Text = "Present"
+	}
+	else
+	{
+		$LinkedvCenterCsvValidationCheck.Forecolor = "Red"
+		$LinkedvCenterCsvValidationCheck.Text = "Not Present"
+		$vCenter_to_LinkedvCenter_DrawCheckBox.CheckState = "UnChecked"
+	}
 } )
 $CsvValidationButton.Add_MouseClick({ $CsvValidationButton.Forecolor = [System.Drawing.Color]::Green ; $CsvValidationButton.Text = "CSV Validation Complete" })
-#endregion
+#endregion ~~< CsvValidationButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VisioOpenOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VisioOpenOutputButton.Add_MouseClick({Find_DrawVisioFolder; 
 	if($VisioFolder -eq $null)
@@ -2841,9 +2938,10 @@ $VisioOpenOutputButton.Add_MouseClick({Find_DrawVisioFolder;
 		$VisioOpenOutputButton.Text = $VisioFolder
 	}
 } )
-#endregion
+#endregion ~~< VisioOpenOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-$DrawUncheckButton.Add_Click( {$VM_to_Host_DrawCheckBox.CheckState = "UnChecked" ;
+$DrawUncheckButton.Add_Click( { $vCenter_to_LinkedvCenter_DrawCheckBox.CheckState = "UnChecked" ;
+	$VM_to_Host_DrawCheckBox.CheckState = "UnChecked" ;
 	$VM_to_Folder_DrawCheckBox.CheckState = "UnChecked" ;
 	$VMs_with_RDMs_DrawCheckBox.CheckState = "UnChecked" ;
 	$SRM_Protected_VMs_DrawCheckBox.CheckState = "UnChecked" ;
@@ -2860,9 +2958,10 @@ $DrawUncheckButton.Add_Click( {$VM_to_Host_DrawCheckBox.CheckState = "UnChecked"
 	$Cluster_to_DRS_Rule_DrawCheckBox.CheckState = "UnChecked";
 	$Snapshot_to_VM_DrawCheckBox.CheckState = "UnChecked"
 } )
-#endregion
+#endregion ~~< DrawUncheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-$DrawCheckButton.Add_Click( {$VM_to_Host_DrawCheckBox.CheckState = "Checked" ;
+$DrawCheckButton.Add_Click( { $vCenter_to_LinkedvCenter_DrawCheckBox.CheckState = "Checked" ;
+	$VM_to_Host_DrawCheckBox.CheckState = "Checked" ;
 	$VM_to_Folder_DrawCheckBox.CheckState = "Checked" ;
 	$VMs_with_RDMs_DrawCheckBox.CheckState = "Checked" ;
 	$SRM_Protected_VMs_DrawCheckBox.CheckState = "Checked" ;
@@ -2880,7 +2979,7 @@ $DrawCheckButton.Add_Click( {$VM_to_Host_DrawCheckBox.CheckState = "Checked" ;
 	$Cluster_to_DRS_Rule_DrawCheckBox.CheckState = "Checked";
 	$Snapshot_to_VM_DrawCheckBox.CheckState = "Checked"
 } )
-#endregion
+#endregion ~~< DrawCheckButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DrawButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawButton.Add_Click({
 if($VisioFolder -eq $null)
@@ -2893,6 +2992,15 @@ else
 $DrawButton.Forecolor = [System.Drawing.Color]::Blue ;
 $DrawButton.Text = "Drawing Please Wait" ;
 Create_Visio_Base;
+if ($vCenter_to_LinkedvCenter_DrawCheckBox.Checked -eq "True")
+{
+	$vCenter_to_LinkedvCenter_Complete.Forecolor = "Blue"
+	$vCenter_to_LinkedvCenter_Complete.Text = "Processing ..."
+	$TabDraw.Controls.Add($vCenter_to_LinkedvCenter_Complete)
+	vCenter_to_LinkedvCenter
+	$vCenter_to_LinkedvCenter_Complete.Forecolor = "Green"
+	$vCenter_to_LinkedvCenter_Complete.Text = "Complete"
+};
 if ($VM_to_Host_DrawCheckBox.Checked -eq "True")
 {
 	$VM_to_Host_Complete.Forecolor = "Blue"
@@ -2957,6 +3065,15 @@ if ($Datastore_to_Host_DrawCheckBox.Checked -eq "True")
 	$Datastore_to_Host_Complete.Forecolor = "Green"
 	$Datastore_to_Host_Complete.Text = "Complete"
 }
+if ($Snapshot_to_VM_DrawCheckBox.Checked -eq "True")
+{
+	$Snapshot_to_VM_Complete.Forecolor = "Blue"
+	$Snapshot_to_VM_Complete.Text = "Processing ..."
+	$TabDraw.Controls.Add($Snapshot_to_VM_Complete)
+	Snapshot_to_VM
+	$Snapshot_to_VM_Complete.Forecolor = "Green"
+	$Snapshot_to_VM_Complete.Text = "Complete"
+};
 if ($PhysicalNIC_to_vSwitch_DrawCheckBox.Checked -eq "True")
 {
 	$PhysicalNIC_to_vSwitch_Complete.Forecolor = "Blue"
@@ -3029,17 +3146,8 @@ if ($Cluster_to_DRS_Rule_DrawCheckBox.Checked -eq "True")
 	$Cluster_to_DRS_Rule_Complete.Forecolor = "Green"
 	$Cluster_to_DRS_Rule_Complete.Text = "Complete"
 };
-if ($Snapshot_to_VM_DrawCheckBox.Checked -eq "True")
-{
-	$Snapshot_to_VM_Complete.Forecolor = "Blue"
-	$Snapshot_to_VM_Complete.Text = "Processing ..."
-	$TabDraw.Controls.Add($Snapshot_to_VM_Complete)
-	Snapshot_to_VM
-	$Snapshot_to_VM_Complete.Forecolor = "Green"
-	$Snapshot_to_VM_Complete.Text = "Complete"
-};
 $DrawButton.Forecolor = [System.Drawing.Color]::Green; $DrawButton.Text = "Visio Drawings Complete"}})
-#endregion
+#endregion ~~< DrawButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< OpenVisioButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $OpenVisioButton.Add_Click({Open_Final_Visio ;
 	$VcenterTextBox.Text = "" ;
@@ -3072,11 +3180,14 @@ $OpenVisioButton.Add_Click({Open_Final_Visio ;
 	$DrsClusterGroupCsvValidationCheck.Text = "" ;
 	$DrsVmHostRuleCsvValidationCheck.Text = "" ;
 	$ResourcePoolCsvValidationCheck.Text = "" ;
+	$LinkedvCenterCsvValidationCheck.Text = "" ;
 	$SnapshotCsvValidationCheck.Text = "" ;
 	$CsvValidationButton.Forecolor = [System.Drawing.Color]::Black ;
 	$CsvValidationButton.Text = "Check for CSVs" ;
 	$VisioOpenOutputButton.Forecolor = [System.Drawing.Color]::Black ;
 	$VisioOpenOutputButton.Text = "Select Visio Output Folder" ;
+	$vCenter_to_LinkedvCenter_DrawCheckBox.CheckState = "Checked" ;
+	$vCenter_to_LinkedvCenter_Complete.Text = "" ;
 	$VM_to_Host_DrawCheckBox.CheckState = "Checked" ;
 	$VM_to_Host_Complete.Text = "" ;
 	$VM_to_Folder_DrawCheckBox.CheckState = "Checked" ;
@@ -3091,6 +3202,8 @@ $OpenVisioButton.Add_Click({Open_Final_Visio ;
 	$VM_to_ResourcePool_Complete.Text = "" ;
 	$Datastore_to_Host_DrawCheckBox.CheckState = "Checked" ;
 	$Datastore_to_Host_Complete.Text = "" ;
+	$Snapshot_to_VM_DrawCheckBox.CheckState = "Checked" ;
+	$Snapshot_to_VM_Complete.Text = "" ;
 	$PhysicalNIC_to_vSwitch_DrawCheckBox.CheckState = "Checked" ;
 	$PhysicalNIC_to_vSwitch_Complete.Text = "" ;
 	$VSS_to_Host_DrawCheckBox.CheckState = "Checked" ;
@@ -3107,24 +3220,22 @@ $OpenVisioButton.Add_Click({Open_Final_Visio ;
 	$VDSPortGroup_to_VM_Complete.Text = "" ;
 	$Cluster_to_DRS_Rule_DrawCheckBox.CheckState = "Checked" ;
 	$Cluster_to_DRS_Rule_Complete.Text = "" ;
-	$Snapshot_to_VM_DrawCheckBox.CheckState = "Checked" ;
-	$Snapshot_to_VM_Complete.Text = "" ;
 	$DrawButton.Forecolor = [System.Drawing.Color]::Black ;
 	$DrawButton.Text = "Draw Visio"
 } )
-#endregion
-#endregion
-#endregion
+#endregion ~~< OpenVisioButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Buttons >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Custom Code >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#region Event Loop
+#region ~~< Event Loop >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Main
 {
 	[System.Windows.Forms.Application]::EnableVisualStyles()
 	[System.Windows.Forms.Application]::Run($vDiagram)
 }
-#endregion
+#endregion ~~< Event Loop >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#region Event Handlers
+#region ~~< Event Handlers >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenter Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Connect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Connect_vCenter
@@ -3133,14 +3244,14 @@ function Connect_vCenter
 	$User = $UserNameTextBox.Text
 	Connect-VIServer $Vcenter -user $User -password $PasswordTextBox.Text
 }
-#endregion
+#endregion ~~< Connect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Disconnect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Disconnect_vCenter
 {
 	$Disconnect = Disconnect-ViServer * -Confirm:$false
 }
-#endregion
-#endregion
+#endregion ~~< Disconnect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< vCenter Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Folder Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Find_CaptureCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Find_CaptureCsvFolder
@@ -3163,7 +3274,7 @@ function Find_CaptureCsvFolder
 	}
 	$global:CaptureCsvFolder = $CaptureCsvBrowse.SelectedPath
 }
-#endregion
+#endregion ~~< Find_CaptureCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Check_CaptureCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Check_CaptureCsvFolder
 {
@@ -3192,7 +3303,7 @@ function Check_CaptureCsvFolder
 	}
   }
 }
-#endregion
+#endregion ~~< Check_CaptureCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Find_DrawCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Find_DrawCsvFolder
 {
@@ -3214,7 +3325,7 @@ function Find_DrawCsvFolder
 	}
 	$global:DrawCsvFolder = $DrawCsvBrowse.SelectedPath
 }
-#endregion
+#endregion ~~< Find_DrawCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Find_DrawVisioFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Find_DrawVisioFolder
 {
@@ -3236,8 +3347,8 @@ function Find_DrawVisioFolder
 	}
 	$global:VisioFolder = $VisioBrowse.SelectedPath
 }
-#endregion
-#endregion
+#endregion ~~< Find_DrawVisioFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Folder Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Export Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< vCenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function vCenter_Export
@@ -3249,7 +3360,7 @@ function vCenter_Export
 	@{ N = "Build" ; E = { $_.Build } },
 	@{ N = "OsType" ; E = { $_.ExtensionData.Content.About.OsType } } | Export-Csv $vCenterExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< vCenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Datacenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Datacenter_Export
 {
@@ -3257,7 +3368,7 @@ function Datacenter_Export
 	Get-Datacenter | Sort-Object Name | 
 	Select-Object Name | Export-Csv $DatacenterExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< Datacenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Cluster_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Cluster_Export
 {
@@ -3277,7 +3388,7 @@ function Cluster_Export
 	@{ N = "VmMonitoring" ; E = { $_.ExtensionData.configuration.dasconfig.VmMonitoring } }, 
 	@{ N = "HostMonitoring" ; E = { $_.ExtensionData.configuration.dasconfig.HostMonitoring } } | Export-Csv $ClusterExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< Cluster_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VmHost_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VmHost_Export
 {
@@ -3314,12 +3425,12 @@ function VmHost_Export
 	@{ N = "MacAddress" ; E = { [string]::Join(", ", ($_.Config.Network.Vnic.Spec.Mac)) } },
 	@{ N = "NumHBAs" ; E = { $_.Summary.Hardware.NumHBAs } } | Export-Csv $VmHostExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< VmHost_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Vm_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Vm_Export
 {
 	$VmExportFile = "$CaptureCsvFolder\$vCenter-VmExport.csv"
-	foreach ($Vm in(Get-View -ViewType VirtualMachine -Property Name, Config, Config.Tools, Guest, Guest.Net, Config.Hardware, Summary.Config, Config.DatastoreUrl, Parent, Runtime.Host, Snapshot, RootSnapshot -Server $vCenter | Sort-Object Name))
+	foreach ($Vm in(Get-View -ViewType VirtualMachine -Property Name, Config, Config.Tools, Guest, Guest.Net, Config.Hardware, Summary.Config, Config.DatastoreUrl, Parent, Runtime.Host -Server $vCenter | Sort-Object Name))
 	{
 		$Folder = Get-View -Id $Vm.Parent -Property Name
 		$Vm |
@@ -3349,12 +3460,10 @@ function Vm_Export
 		@{ N = "NumVirtualDisks" ; E = { $_.Summary.Config.NumVirtualDisks } },
 		@{ N = "CpuReservation" ; E = { $_.Summary.Config.CpuReservation } },
 		@{ N = "MemoryReservation" ; E = { $_.Summary.Config.MemoryReservation } },
-		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } },
-		@{ N = "Snapshot" ; E = { $_.Snapshot } },
-		@{ N = "RootSnapshot" ; E = { $_.RootSnapshot } }| Export-Csv $VmExportFile -Append -NoTypeInformation
+		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } } | Export-Csv $VmExportFile -Append -NoTypeInformation
 	}
 }
-#endregion
+#endregion ~~< Vm_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Template_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Template_Export
 {
@@ -3384,7 +3493,7 @@ function Template_Export
 		@{ N = "MemoryReservation" ; E = { $_.ExtensionData.Summary.Config.MemoryReservation } } | Export-Csv $TemplateExportFile -Append -NoTypeInformation
 	}
 }
-#endregion
+#endregion ~~< Template_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< DatastoreCluster_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function DatastoreCluster_Export
 {
@@ -3398,7 +3507,7 @@ function DatastoreCluster_Export
 	@{ N = "IOLoadBalanceEnabled" ; E = { $_.IoLoadBalanceEnabled } },
 	@{ N = "CapacityGB" ; E = { [math]::Round([decimal]$_.CapacityGB, 0) } } | Export-Csv $DatastoreClusterExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< DatastoreCluster_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Datastore_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Datastore_Export
 {
@@ -3419,7 +3528,7 @@ function Datastore_Export
 	@{ N = "Accessible" ; E = { $_.State } },
 	@{ N = "CongestionThresholdMillisecond" ; E = { $_.CongestionThresholdMillisecond } } | Export-Csv $DatastoreExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< Datastore_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VsSwitch_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VsSwitch_Export
 {
@@ -3441,7 +3550,7 @@ function VsSwitch_Export
 	@{ N = "ActiveNic" ; E = { $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.ActiveNic } }, 
 	@{ N = "StandbyNic" ; E = { $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.StandbyNic } } | Export-Csv $VsSwitchExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< VsSwitch_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPort_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VssPort_Export
 {
@@ -3462,7 +3571,7 @@ function VssPort_Export
 		}
 	}
 }
-#endregion
+#endregion ~~< VssPort_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssVmk_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VssVmk_Export
 {
@@ -3492,7 +3601,7 @@ function VssVmk_Export
 		}
 	}
 }
-#endregion
+#endregion ~~< VssVmk_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPnic_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VssPnic_Export
 {
@@ -3511,7 +3620,7 @@ function VssPnic_Export
 		}
 	}
 }
-#endregion
+#endregion ~~< VssPnic_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdSwitch_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VdSwitch_Export
 {
@@ -3530,7 +3639,7 @@ function VdSwitch_Export
 		@{ N = "Mtu" ; E = { $_.Mtu } } | Export-Csv $VdSwitchExportFile -Append -NoTypeInformation
 	}
 }
-#endregion
+#endregion ~~< VdSwitch_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPort_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VdsPort_Export
 {
@@ -3556,7 +3665,7 @@ function VdsPort_Export
 		}
 	}
 }
-#endregion
+#endregion ~~< VdsPort_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsVmk_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VdsVmk_Export
 {
@@ -3584,7 +3693,7 @@ function VdsVmk_Export
 		}
 	}
 }
-#endregion
+#endregion ~~< VdsVmk_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VdsPnic_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VdsPnic_Export
 {
@@ -3605,7 +3714,7 @@ function VdsPnic_Export
 		}
 	}
 }
-#endregion
+#endregion ~~< VdsPnic_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Folder_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Folder_Export
 {
@@ -3617,7 +3726,7 @@ function Folder_Export
 		@{ N = "Datacenter" ; E = { $Datacenter.Name } } | Export-Csv $FolderExportFile -Append -NoTypeInformation
 	}
 }
-#endregion
+#endregion ~~< Folder_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Rdm_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Rdm_Export
 {
@@ -3634,7 +3743,7 @@ function Rdm_Export
 	@{ N = "DeviceName" ; E = { $_.ExtensionData.Backing.DeviceName } },
 	@{ N = "Sharing" ; E = { $_.ExtensionData.Backing.Sharing } } | Export-Csv $RdmExportFile -Append -NoTypeInformation
 }
-#endregion
+#endregion ~~< Rdm_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Drs_Rule_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Drs_Rule_Export
 {
@@ -3650,7 +3759,7 @@ function Drs_Rule_Export
 		@{ N = "Mandatory" ; E = { $_.Mandatory } } | Export-Csv $DrsRuleExportFile -Append -NoTypeInformation
 	}
 }
-#endregion
+#endregion ~~< Drs_Rule_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Drs_Cluster_Group_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Drs_Cluster_Group_Export
 {
@@ -3665,7 +3774,7 @@ function Drs_Cluster_Group_Export
 		@{ N = "Member" ; E = { $_.Member } } | Export-Csv $DrsClusterGroupExportFile -Append -NoTypeInformation
 	}
 }
-#endregion
+#endregion ~~< Drs_Cluster_Group_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Drs_VmHost_Rule_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Drs_VmHost_Rule_Export
 {
@@ -3687,7 +3796,7 @@ function Drs_VmHost_Rule_Export
 		}
 	}
 }
-#endregion
+#endregion ~~< Drs_VmHost_Rule_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Resource_Pool_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Resource_Pool_Export
 {
@@ -3712,21 +3821,38 @@ function Resource_Pool_Export
 		}
 	}
 }
-#endregion
-#region ~~< Snapshot_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Resource_Pool_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Snapshot_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Snapshot_Export
 {
 	$SnapshotExportFile = "$CaptureCsvFolder\$vCenter-SnapshotExport.csv"
 	(Get-VM | Get-Snapshot) | sort VM, Created | 
-	Select-Object @{ N = "Name" ; E = { $_.Name } },
-	@{ N = "VM" ; E = { $_.VM } }, 
+	Select-Object @{ N = "VM" ; E = { $_.VM } }, 
+	@{ N = "Name" ; E = { $_.Name } }, 
 	@{ N = "Created" ; E = { $_.Created } }, 
 	@{ N = "Children" ; E = { $_.Children } }, 
 	@{ N = "ParentSnapshot" ; E = { $_.ParentSnapshot } },
 	@{ N = "IsCurrent" ; E = { $_.IsCurrent } } | Export-Csv $SnapshotExportFile -Append -NoTypeInformation
 }
-#endregion
-#endregion
+#endregion ~~< Snapshot_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Linked_vCenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Linked_vCenter_Export
+{
+	$LinkedvCenterExportFile = "$CaptureCsvFolder\$vCenter-LinkedvCenterExport.csv"
+	Disconnect-ViServer * -Confirm:$false
+	$global:vCenter = $VcenterTextBox.Text
+	$User = $UserNameTextBox.Text
+	Connect-VIServer $Vcenter -user $User -password $PasswordTextBox.Text -AllLinked
+	$global:DefaultVIServers |
+	Where-Object { $_.Name -ne "$vCenter" } |
+	Select-Object @{ N = "Name" ; E = { $_.Name } }, 
+	@{ N = "Version" ; E = { $_.Version } }, 
+	@{ N = "Build" ; E = { $_.Build } },
+	@{ N = "OsType" ; E = { $_.ExtensionData.Content.About.OsType } },
+	@{ N = "vCenter" ; E = { $vCenter } } | Export-Csv $LinkedvCenterExportFile -Append -NoTypeInformation
+}
+#endregion ~~< Linked_vCenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Export Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Visio Object Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Connect-VisioObject >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Connect-VisioObject($firstObj, $secondObj)
@@ -3735,7 +3861,7 @@ function Connect-VisioObject($firstObj, $secondObj)
 	$ConnectBegin = $shpConn.CellsU("BeginX").GlueTo($firstObj.CellsU("PinX"))
 	$ConnectEnd = $shpConn.CellsU("EndX").GlueTo($secondObj.CellsU("PinX"))
 }
-#endregion
+#endregion ~~< Connect-VisioObject >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVC($mastObj, $item)
 {
@@ -3743,7 +3869,7 @@ function Add-VisioObjectVC($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectDC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectDC($mastObj, $item)
 {
@@ -3751,7 +3877,7 @@ function Add-VisioObjectDC($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectDC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectCluster >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectCluster($mastObj, $item)
 {
@@ -3759,7 +3885,7 @@ function Add-VisioObjectCluster($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectCluster >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectHost >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectHost($mastObj, $item)
 {
@@ -3767,7 +3893,7 @@ function Add-VisioObjectHost($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectHost >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVM($mastObj, $item)
 {
@@ -3775,7 +3901,7 @@ function Add-VisioObjectVM($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectTemplate >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectTemplate($mastObj, $item)
 {
@@ -3783,7 +3909,7 @@ function Add-VisioObjectTemplate($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectTemplate >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectSRM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectSRM($mastObj, $item)
 {
@@ -3791,7 +3917,7 @@ function Add-VisioObjectSRM($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectSRM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectDatastore >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectDatastore($mastObj, $item)
 {
@@ -3799,7 +3925,7 @@ function Add-VisioObjectDatastore($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectDatastore >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectHardDisk >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectHardDisk($mastObj, $item)
 {
@@ -3807,7 +3933,7 @@ function Add-VisioObjectHardDisk($mastObj, $item)
 	$shpObj.Text = $item.ScsiCanonicalName
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectHardDisk >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectFolder($mastObj, $item)
 {
@@ -3815,7 +3941,7 @@ function Add-VisioObjectFolder($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVsSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVsSwitch($mastObj, $item)
 {
@@ -3823,7 +3949,7 @@ function Add-VisioObjectVsSwitch($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVsSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectPG >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectPG($mastObj, $item)
 {
@@ -3831,7 +3957,7 @@ function Add-VisioObjectPG($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectPG >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVssPNIC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVssPNIC($mastObj, $item)
 {
@@ -3839,7 +3965,7 @@ function Add-VisioObjectVssPNIC($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVssPNIC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVMK >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVMK($mastObj, $item)
 {
@@ -3847,7 +3973,7 @@ function Add-VisioObjectVMK($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVMK >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVdSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVdSwitch($mastObj, $item)
 {
@@ -3855,7 +3981,7 @@ function Add-VisioObjectVdSwitch($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVdSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVdsPG >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVdsPG($mastObj, $item)
 {
@@ -3863,7 +3989,7 @@ function Add-VisioObjectVdsPG($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVdsPG >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectVdsPNIC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectVdsPNIC($mastObj, $item)
 {
@@ -3871,7 +3997,7 @@ function Add-VisioObjectVdsPNIC($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectVdsPNIC >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectDrsRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectDrsRule($mastObj, $item)
 {
@@ -3879,7 +4005,7 @@ function Add-VisioObjectDrsRule($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectDrsRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectDrsClusterGroup >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectDrsClusterGroup($mastObj, $item)
 {
@@ -3887,7 +4013,7 @@ function Add-VisioObjectDrsClusterGroup($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectDrsClusterGroup >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectDRSVMHostRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectDRSVMHostRule($mastObj, $item)
 {
@@ -3895,7 +4021,7 @@ function Add-VisioObjectDRSVMHostRule($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
+#endregion ~~< Add-VisioObjectDRSVMHostRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Add-VisioObjectResourcePool >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectResourcePool($mastObj, $item)
 {
@@ -3903,16 +4029,32 @@ function Add-VisioObjectResourcePool($mastObj, $item)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
-#region ~~< Add-VisioObjectSnapshot Function >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Add-VisioObjectResourcePool >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Add-VisioObjectRecoveryPlan Function >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Add-VisioObjectRecoveryPlan($mastObj, $item)
+{
+	$shpObj = $pagObj.Drop($mastObj, $x, $y)
+	$shpObj.Text = $item.name
+	return $shpObj
+}
+#endregion ~~< Add-VisioObjectRecoveryPlan Function >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Add-VisioObjectProtectionGroup Function >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Add-VisioObjectProtectionGroup($mastObj, $item)
+{
+	$shpObj = $pagObj.Drop($mastObj, $x, $y)
+	$shpObj.Text = $item.name
+	return $shpObj
+}
+#endregion ~~< Add-VisioObjectProtectionGroup Function >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Add-VisioObjectSnapshot Function >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Add-VisioObjectSnapshot($mastObj, $item)
 {
 	$shpObj = $pagObj.Drop($mastObj, $x, $y)
 	$shpObj.Text = $item.name
 	return $shpObj
 }
-#endregion
-#endregion
+#endregion ~~< Add-VisioObjectSnapshot Function >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Visio Object Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Visio Draw Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_vCenter
@@ -3926,14 +4068,14 @@ function Draw_vCenter
 	# OsType
 	$VCObject.Cells("Prop.OsType").Formula = '"' + $vCenterImport.OsType + '"'
 }
-#endregion
+#endregion ~~< Draw_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_Datacenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_Datacenter
 {
 	# Name
 	$DatacenterObject.Cells("Prop.Name").Formula = '"' + $Datacenter.Name + '"'
 }
-#endregion
+#endregion ~~< Draw_Datacenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_Cluster >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_Cluster
 {
@@ -3962,7 +4104,7 @@ function Draw_Cluster
 	# HostMonitoring
 	$ClusterObject.Cells("Prop.HostMonitoring").Formula = '"' + $Cluster.HostMonitoring + '"'
 }
-#endregion
+#endregion ~~< Draw_Cluster >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VmHost >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VmHost
 {
@@ -3999,7 +4141,7 @@ function Draw_VmHost
 	# NumHBAs
 	$HostObject.Cells("Prop.NumHBAs").Formula = '"' + $VMHost.NumHBAs + '"'
 }
-#endregion
+#endregion ~~< Draw_VmHost >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VM
 {
@@ -4052,7 +4194,7 @@ function Draw_VM
 	# NeedsConfiguration
 	$VMObject.Cells("Prop.NeedsConfiguration").Formula = '"' + $VM.NeedsConfiguration + '"'
 }
-#endregion
+#endregion ~~< Draw_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_Template >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_Template
 {
@@ -4087,14 +4229,14 @@ function Draw_Template
 	# MemoryReservation
 	$TemplateObject.Cells("Prop.MemoryReservation").Formula = '"' + $Template.MemoryReservation + '"'
 }
-#endregion
+#endregion ~~< Draw_Template >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_Folder
 {
 	#Name
 	$FolderObject.Cells("Prop.Name").Formula = '"' + $Folder.Name + '"'
 }
-#endregion
+#endregion ~~< Draw_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_RDM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_RDM
 {
@@ -4112,10 +4254,10 @@ function Draw_RDM
 	$RDMObject.Cells("Prop.Sharing").Formula = '"' + $HardDisk.Sharing + '"'
 	# HardDisk
 	$RDMObject.Cells("Prop.Label").Formula = '"' + $HardDisk.Label + '"'
-	#Persistence
+	# Persistence
 	$RDMObject.Cells("Prop.Persistence").Formula = '"' + $HardDisk.Persistence + '"'
 }
-#endregion
+#endregion ~~< Draw_RDM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_SRM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_SRM
 {
@@ -4134,7 +4276,7 @@ function Draw_SRM
 	# MemoryGB
 	$SrmObject.Cells("Prop.MemoryGB").Formula = '"' + $SrmVM.MemoryGB + '"'
 }
-#endregion
+#endregion ~~< Draw_SRM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_DatastoreCluster >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_DatastoreCluster
 {
@@ -4147,7 +4289,7 @@ function Draw_DatastoreCluster
 	# CapacityGB
 	$DatastoreClusObject.Cells("Prop.CapacityGB").Formula = '"' + $DatastoreCluster.CapacityGB + '"'
 }
-#endregion
+#endregion ~~< Draw_DatastoreCluster >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_Datastore >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_Datastore
 {
@@ -4170,7 +4312,7 @@ function Draw_Datastore
 	# State
 	$DatastoreObject.Cells("Prop.State").Formula = '"' + $Datastore.State + '"'
 }
-#endregion
+#endregion ~~< Draw_Datastore >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_ResourcePool >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_ResourcePool
 {
@@ -4199,7 +4341,7 @@ function Draw_ResourcePool
 	# MemLimitGB
 	$ResourcePoolObject.Cells("Prop.MemLimitGB").Formula = '"' + $ResourcePool.MemLimitGB + '"'
 }
-#endregion
+#endregion ~~< Draw_ResourcePool >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VsSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VsSwitch
 {
@@ -4228,7 +4370,7 @@ function Draw_VsSwitch
 	# NicTeamingNicOrderStandbyNic
 	$VSSObject.Cells("Prop.StandbyNic").Formula = '"' + $VsSwitch.StandbyNic + '"'
 }
-#endregion
+#endregion ~~< Draw_VsSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VssPnic >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VssPnic
 {
@@ -4239,7 +4381,7 @@ function Draw_VssPnic
 	# VlanConfiguration
 	$VssPNICObject.Cells("Prop.VlanConfiguration").Formula = '"' + $VssPnic.VlanConfiguration + '"'
 }
-#endregion
+#endregion ~~< Draw_VssPnic >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VssPort >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VssPort
 {
@@ -4252,7 +4394,7 @@ function Draw_VssPort
 	# StandbyNic
 	$VssNicObject.Cells("Prop.StandbyNic").Formula = '"' + $VssPort.StandbyNic + '"'
 }
-#endregion
+#endregion ~~< Draw_VssPort >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VssVmk >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VssVmk
 {
@@ -4277,7 +4419,7 @@ function Draw_VssVmk
 	# Mtu
 	$VmkNicObject.Cells("Prop.Mtu").Formula = '"' + $VssVmk.Mtu + '"'
 }
-#endregion
+#endregion ~~< Draw_VssVmk >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VdSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VdSwitch
 {
@@ -4294,7 +4436,7 @@ function Draw_VdSwitch
 	# Mtu
 	$VdSwitchObject.Cells("Prop.Mtu").Formula = '"' + $VdSwitch.Mtu + '"'
 }
-#endregion
+#endregion ~~< Draw_VdSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VdsPnic >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VdsPnic
 {
@@ -4311,7 +4453,7 @@ function Draw_VdsPnic
 	# Mtu
 	$VdSwitchObject.Cells("Prop.Mtu").Formula = '"' + $VdSwitch.Mtu + '"'
 }
-#endregion
+#endregion ~~< Draw_VdsPnic >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VdsPort >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VdsPort
 {
@@ -4334,7 +4476,7 @@ function Draw_VdsPort
 	# PortBinding
 	$VPGObject.Cells("Prop.PortBinding").Formula = '"' + $VdsPort.PortBinding + '"'
 }
-#endregion
+#endregion ~~< Draw_VdsPort >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VdsVmk >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_VdsVmk
 {
@@ -4359,7 +4501,7 @@ function Draw_VdsVmk
 	# Mtu
 	$VmkNicObject.Cells("Prop.Mtu").Formula = '"' + $VdsVmk.Mtu + '"'
 }
-#endregion
+#endregion ~~< Draw_VdsVmk >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_DrsRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_DrsRule
 {
@@ -4372,7 +4514,7 @@ function Draw_DrsRule
 	# DRS Rule Mandatory
 	$DRSObject.Cells("Prop.Mandatory").Formula = '"' + $DRSRule.Mandatory + '"'
 }
-#endregion
+#endregion ~~< Draw_DrsRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_DrsVmHostRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_DrsVmHostRule
 {
@@ -4391,7 +4533,7 @@ function Draw_DrsVmHostRule
 	# AntiAffineHostGroupName
 	$DRSVMHostRuleObject.Cells("Prop.AntiAffineHostGroupName").Formula = '"' + $DrsVmHostRule.ExtensionData.AntiAffineHostGroupName + '"'
 }
-#endregion
+#endregion ~~< Draw_DrsVmHostRule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_DrsClusterGroup >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Draw_DrsClusterGroup
 {
@@ -4402,68 +4544,23 @@ function Draw_DrsClusterGroup
 	# Members
 	$DrsClusterGroupObject.Cells("Prop.Member").Formula = '"' + $DrsClusterGroup.Member + '"'
 }
-#endregion
-#region ~~< Draw_ParentSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function Draw_ParentSnapshot
+#endregion ~~< Draw_DrsClusterGroup >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Draw_Snapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Draw_Snapshot
 {
 	# Name
-	$ParentSnapshotObject.Cells("Prop.Name").Formula = '"' + $ParentSnapshot.Name + '"'
+	$SnapshotObject.Cells("Prop.Name").Formula = '"' + $Snapshot.Name + '"'
 	# Created
-	$ParentSnapshotObject.Cells("Prop.Created").Formula = '"' + $ParentSnapshot.Created + '"'
+	$SnapshotObject.Cells("Prop.Created").Formula = '"' + $Snapshot.Created + '"'
 	# Children
-	$ParentSnapshotObject.Cells("Prop.Children").Formula = '"' + $ParentSnapshot.Children + '"'
+	$SnapshotObject.Cells("Prop.Children").Formula = '"' + $Snapshot.Children + '"'
 	# ParentSnapshot
-	$ParentSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ParentSnapshot.ParentSnapshot + '"'
+	$SnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $Snapshot.ParentSnapshot + '"'
 	# IsCurrent
-	$ParentSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ParentSnapshot.IsCurrent + '"'
+	$SnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $Snapshot.IsCurrent + '"'
 }
-#endregion
-#region ~~< Draw_ChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function Draw_ChildSnapshot
-{
-	# Name
-	$ChildSnapshotObject.Cells("Prop.Name").Formula = '"' + $ChildSnapshot.Name + '"'
-	# Created
-	$ChildSnapshotObject.Cells("Prop.Created").Formula = '"' + $ChildSnapshot.Created + '"'
-	# Children
-	$ChildSnapshotObject.Cells("Prop.Children").Formula = '"' + $ChildSnapshot.Children + '"'
-	# ParentSnapshot
-	$ChildSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ChildSnapshot.ParentSnapshot + '"'
-	# IsCurrent
-	$ChildSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ChildSnapshot.IsCurrent + '"'
-}
-#endregion
-#region ~~< Draw_ChildChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function Draw_ChildChildSnapshot
-{
-	# Name
-	$ChildChildSnapshotObject.Cells("Prop.Name").Formula = '"' + $ChildChildSnapshot.Name + '"'
-	# Created
-	$ChildChildSnapshotObject.Cells("Prop.Created").Formula = '"' + $ChildChildSnapshot.Created + '"'
-	# Children
-	$ChildChildSnapshotObject.Cells("Prop.Children").Formula = '"' + $ChildChildSnapshot.Children + '"'
-	# ParentSnapshot
-	$ChildChildSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ChildChildSnapshot.ParentSnapshot + '"'
-	# IsCurrent
-	$ChildChildSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ChildChildSnapshot.IsCurrent + '"'
-}
-#endregion
-#region ~~< Draw_ChildChildChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function Draw_ChildChildChildSnapshot
-{
-	# Name
-	$ChildChildChildSnapshotObject.Cells("Prop.Name").Formula = '"' + $ChildChildChildSnapshot.Name + '"'
-	# Created
-	$ChildChildChildSnapshotObject.Cells("Prop.Created").Formula = '"' + $ChildChildChildSnapshot.Created + '"'
-	# Children
-	$ChildChildChildSnapshotObject.Cells("Prop.Children").Formula = '"' + $ChildChildChildSnapshot.Children + '"'
-	# ParentSnapshot
-	$ChildChildChildSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ChildChildChildSnapshot.ParentSnapshot + '"'
-	# IsCurrent
-	$ChildChildChildSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ChildChildChildSnapshot.IsCurrent + '"'
-}
-#endregion
-#endregion
+#endregion ~~< Draw_Snapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Visio Draw Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CSV >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CSV_In_Out >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function CSV_In_Out
@@ -4535,12 +4632,15 @@ function CSV_In_Out
 	# DRS VmHost Rule
 	$global:DrsVmHostRuleExportFile = "$DrawCsvFolder\$vCenter-DrsVmHostRuleExport.csv"
 	$global:DrsVmHostImport = Import-Csv $DrsVmHostRuleExportFile
-	# DRS Snapshot
+	# Snapshot
 	$global:SnapshotExportFile = "$DrawCsvFolder\$vCenter-SnapshotExport.csv"
 	$global:SnapshotImport = Import-Csv $SnapshotExportFile
+	# Linked vCenter
+	$global:LinkedvCenterExportFile = "$DrawCsvFolder\$vCenter-LinkedvCenterExport.csv"
+	$global:LinkedvCenterImport = Import-Csv $LinkedvCenterExportFile
 }
-#endregion
-#endregion
+#endregion ~~< CSV_In_Out >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< CSV >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Shapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Visio_Shapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Visio_Shapes
@@ -4600,8 +4700,8 @@ function Visio_Shapes
 	# Current Snapshot Object
 	$global:CurrentSnapshotObj = $stnObj.Masters.Item("Current Snapshot")
 }
-#endregion
-#endregion
+#endregion ~~< Visio_Shapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Shapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Visio Pages Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Create_Visio_Base >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Create_Visio_Base
@@ -4614,7 +4714,49 @@ function Create_Visio_Base
 	$DocObj.SaveAs($SaveFile)
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< Create_Visio_Base >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< vCenter_to_LinkedvCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function vCenter_to_LinkedvCenter
+{
+	$SaveFile = "$VisioFolder" + "\" + "$vCenter" + " VMware vDiagram - " + "$DateTime" + ".vsd"
+	CSV_In_Out
+	
+	$AppVisio = New-Object -ComObject Visio.InvisibleApp
+	$docsObj = $AppVisio.Documents
+	$docsObj.Open($SaveFile) | Out-Null
+	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
+	$Page = $AppVisio.ActivePage.Name = "vCenter to Linked vCenters"
+	$Page = $DocsObj.Pages('vCenter to Linked vCenters')
+	$pagsObj = $AppVisio.ActiveDocument.Pages
+	$pagObj = $pagsObj.Item('vCenter to Linked vCenters')
+	$AppVisio.ScreenUpdating = $False
+	$AppVisio.EventsEnabled = $False
+		
+	# Load a set of stencils and select one to drop
+	Visio_Shapes
+		
+	# Draw Objects
+	$x = 0
+	$y = 1.50
+		
+	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
+	Draw_vCenter
+	
+	foreach ($LinkedvCenter in $LinkedvCenterImport | Sort-Object Name | Where-Object { $_.Name -ne "$vCenter" })
+	{
+		$x += 2.50
+		$LinkedvCenterObject = Add-VisioObjectDC $VCObj $LinkedvCenter
+		Draw_vCenter
+		Connect-VisioObject $VCObject $LinkedvCenterObject
+		$VCObject = $LinkedvCenterObject
+	}
+		
+	# Resize to fit page
+	$pagObj.ResizeToFitContents()
+	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
+	$AppVisio.Quit()
+}
+#endregion ~~< vCenter_to_LinkedvCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VM_to_Host
 {
@@ -4632,7 +4774,7 @@ function VM_to_Host
 	$AppVisio.ScreenUpdating = $False
 	$AppVisio.EventsEnabled = $False
 		
-		# Load a set of stencils and select one to drop
+	# Load a set of stencils and select one to drop
 	Visio_Shapes
 		
 	# Draw Objects
@@ -4642,7 +4784,7 @@ function VM_to_Host
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 	
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -4750,7 +4892,7 @@ function VM_to_Host
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VM_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VM_to_Folder
 {
@@ -4778,7 +4920,7 @@ function VM_to_Folder
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 				
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -4836,7 +4978,7 @@ function VM_to_Folder
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VM_to_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMs_with_RDMs >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VMs_with_RDMs
 {
@@ -4864,7 +5006,7 @@ function VMs_with_RDMs
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter		
 	
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -4956,7 +5098,7 @@ function VMs_with_RDMs
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VMs_with_RDMs >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< SRM_Protected_VMs >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function SRM_Protected_VMs
 {
@@ -4984,7 +5126,7 @@ function SRM_Protected_VMs
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 	
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5044,7 +5186,7 @@ function SRM_Protected_VMs
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< SRM_Protected_VMs >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_Datastore >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VM_to_Datastore
 {
@@ -5072,7 +5214,7 @@ function VM_to_Datastore
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter		
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5282,7 +5424,7 @@ function VM_to_Datastore
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VM_to_Datastore >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VM_to_ResourcePool >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VM_to_ResourcePool
 {
@@ -5310,7 +5452,7 @@ function VM_to_ResourcePool
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5368,7 +5510,7 @@ function VM_to_ResourcePool
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VM_to_ResourcePool >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Datastore_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Datastore_to_Host
 {
@@ -5396,7 +5538,7 @@ function Datastore_to_Host
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5456,7 +5598,7 @@ function Datastore_to_Host
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< Datastore_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PhysicalNIC_to_vSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function PhysicalNIC_to_vSwitch
 {
@@ -5482,7 +5624,7 @@ function PhysicalNIC_to_vSwitch
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5596,7 +5738,7 @@ function PhysicalNIC_to_vSwitch
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< PhysicalNIC_to_vSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VSS_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VSS_to_Host
 {
@@ -5624,7 +5766,7 @@ function VSS_to_Host
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5702,7 +5844,7 @@ function VSS_to_Host
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VSS_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMK_to_VSS >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VMK_to_VSS
 {
@@ -5730,7 +5872,7 @@ function VMK_to_VSS
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter		
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5808,7 +5950,7 @@ function VMK_to_VSS
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VMK_to_VSS >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VSSPortGroup_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VSSPortGroup_to_VM
 {
@@ -5837,7 +5979,7 @@ function VSSPortGroup_to_VM
 	Draw_vCenter
 		
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -5965,7 +6107,7 @@ function VSSPortGroup_to_VM
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VSSPortGroup_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VDS_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VDS_to_Host
 {
@@ -5993,7 +6135,7 @@ function VDS_to_Host
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter		
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -6071,7 +6213,7 @@ function VDS_to_Host
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VDS_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VMK_to_VDS >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VMK_to_VDS
 {
@@ -6099,7 +6241,7 @@ function VMK_to_VDS
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -6177,7 +6319,7 @@ function VMK_to_VDS
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VMK_to_VDS >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VDSPortGroup_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function VDSPortGroup_to_VM
 {
@@ -6205,7 +6347,7 @@ function VDSPortGroup_to_VM
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -6263,7 +6405,7 @@ function VDSPortGroup_to_VM
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
+#endregion ~~< VDSPortGroup_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Cluster_to_DRS_Rule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Cluster_to_DRS_Rule
 {
@@ -6291,7 +6433,7 @@ function Cluster_to_DRS_Rule
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter		
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -6344,8 +6486,8 @@ function Cluster_to_DRS_Rule
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
-#region ~~< Snapshot_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Cluster_to_DRS_Rule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Snapshot_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Snapshot_to_VM
 {
 	$SaveFile = "$VisioFolder" + "\" + "$vCenter" + " VMware vDiagram - " + "$DateTime" + ".vsd"
@@ -6372,7 +6514,7 @@ function Snapshot_to_VM
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter		
 		
-	foreach ($Datacenter in $DatacenterImport)
+	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
 	{
 		$x = 1.50
 		$y += 1.50
@@ -6380,115 +6522,60 @@ function Snapshot_to_VM
 		Draw_Datacenter
 		Connect-VisioObject $VCObject $DatacenterObject
 				
-		foreach ($VM in($VmImport | Sort-Object Name | Where-Object { ($_.Snapshot -notlike "") }))
+		foreach ($Cluster in($ClusterImport | Sort-Object Name | Where-Object { $_.Datacenter.contains($Datacenter.Name) }))
 		{
 			$x = 3.50
 			$y += 1.50
-			if ($VM.OS -eq "")
-			{
-				$VMObject = Add-VisioObjectVM $OtherObj $VM
-				Draw_VM
-			}
-			else
-			{
-				if ($VM.OS.contains("Microsoft") -eq $True)
-				{
-					$VMObject = Add-VisioObjectVM $MicrosoftObj $VM
-					Draw_VM
-				}
-				else
-				{
-					$VMObject = Add-VisioObjectVM $LinuxObj $VM
-					Draw_VM
-				}
-			}
-			Connect-VisioObject $DatacenterObject $VMObject
-			
-			foreach ($ParentSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ( $_.ParentSnapshot -like $null ) }))
+			$ClusterObject = Add-VisioObjectCluster $ClusterObj $Cluster
+			Draw_Cluster
+			Connect-VisioObject $DatacenterObject $ClusterObject
+			$y += 1.50
+						
+			foreach ($DRSRule in($DrsRuleImport | Where-Object { $_.Cluster.contains($Cluster.Name) }))
 			{
 				$x = 6.00
 				$y += 1.50
-				if ($ParentSnapshot.IsCurrent -eq "FALSE")
-				{
-					$ParentSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ParentSnapshot
-					Draw_ParentSnapshot
-				}
-				else
-				{
-					$ParentSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ParentSnapshot
-					Draw_ParentSnapshot
-				}
-				Connect-VisioObject $VMObject $ParentSnapshotObject 
+				$DRSObject = Add-VisioObjectDrsRule $DRSRuleObj $DRSRule
+				Draw_DrsRule
+				Connect-VisioObject $ClusterObject $DRSObject
+				$y += 1.50
+			}		
+			foreach ($DrsVmHostRule in($DrsVmHostImport | Where-Object { $_.Cluster.contains($Cluster.Name) }))
+			{
+				$x = 6.00
+				$y += 1.50
+				$DRSVMHostRuleObject = Add-VisioObjectDRSVMHostRule $DRSVMHostRuleObj $DrsVmHostRule
+				Draw_DrsVmHostRule
+				Connect-VisioObject $ClusterObject $DRSVMHostRuleObject
+				$y += 1.50
 				
-				foreach ($ChildSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ($_.ParentSnapshot -like $ParentSnapshot.Name) }))
+				foreach ($DrsClusterGroup in($DrsClusterGroupImport | Where-Object { $_.Name.contains($DrsVmHostRule.VMHostGroup) }))
 				{
-					$x = 8.50
-					$y += 1.50
-					if ($ChildSnapshot.IsCurrent -eq "FALSE")
-					{
-						$ChildSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ChildSnapshot
-						Draw_ChildSnapshot
-					}
-					else
-					{
-						$ChildSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ChildSnapshot
-						Draw_ChildSnapshot
-					}
-					Connect-VisioObject $ParentSnapshotObject $ChildSnapshotObject
+					$x += 2.50
+					$DrsClusterGroupObject = Add-VisioObjectDrsClusterGroup $DRSClusterGroupObj $DrsClusterGroup
+					Draw_DrsClusterGroup
+					Connect-VisioObject $DRSVMHostRuleObject $DrsClusterGroupObject
+					$DRSVMHostRuleObject = $DrsClusterGroupObject
 					
-					foreach ($ChildChildSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ($_.ParentSnapshot -like $ChildSnapshot.Name) }))
-					{
-						$x = 11.00
-						$y += 1.50
-						if ($ChildChildSnapshot.IsCurrent -eq "FALSE")
-						{
-							$ChildChildSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ChildChildSnapshot
-							Draw_ChildChildSnapshot
-						}
-						else
-						{
-							$ChildChildSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ChildChildSnapshot
-							Draw_ChildChildSnapshot
-						} 
-						Connect-VisioObject $ChildSnapshotObject $ChildChildSnapshotObject
-						
-						foreach ($ChildChildChildSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ($_.ParentSnapshot -like $ChildChildSnapshot.Name) }))
-						{
-							$x += 2.50
-							$y += 1.50
-							if ($ChildChildChildSnapshot.IsCurrent -eq "FALSE")
-							{
-								$ChildChildChildSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ChildChildChildSnapshot
-								Draw_ChildChildChildSnapshot
-							}
-							else
-							{
-								$ChildChildChildSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ChildChildChildSnapshot
-								Draw_ChildChildChildSnapshot
-							}
-							Connect-VisioObject $ChildChildSnapshotObject $ChildChildChildSnapshotObject
-							$ChildChildSnapshotObject = $ChildChildChildSnapshotObject	
-						}
-					}
 				}
 			}
-		}	
+		}
 	}
-
+		
 	# Resize to fit page
 	$pagObj.ResizeToFitContents()
 	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
 	$AppVisio.Quit()
 }
-#endregion
-#endregion
+#endregion ~~< Snapshot_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Visio Pages Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Open Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Open_Capture_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Open_Capture_Folder
 {
 	explorer.exe $CaptureCsvFolder
 }
-#endregion
+#endregion ~~< Open_Capture_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Open_Final_Visio >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Open_Final_Visio
 {
@@ -6502,8 +6589,8 @@ function Open_Final_Visio
 	$AppVisio.Documents.SaveAs($ConvertSaveFile) | Out-Null
 	del $SaveFile
 }
-#endregion
-#endregion
-#endregion
-Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -DefaultVIServerMode Multiple -Scope AllUsers -Confirm:$False | Out-Null
+#endregion ~~< Open_Final_Visio >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Open Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Event Handlers >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$False | Out-Null
 Main

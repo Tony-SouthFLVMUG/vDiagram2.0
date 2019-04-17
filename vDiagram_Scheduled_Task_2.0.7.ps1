@@ -6,11 +6,11 @@
    vDiagram Scheduled Export
 
 .NOTES 
-   File Name	: vDiagram_Scheduled_Task_2.0.6.ps1 
+   File Name	: vDiagram_Scheduled_Task_2.0.7.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.6
+   Version		: 2.0.7
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -20,7 +20,10 @@
 		Active connection to vCenter to capture data
 
 .CHANGE LOG
-	- 04/05/2019 - v2.0.6
+	- 04/15/2019 - v2.0.7
+		New drawing added for linked vCenters.
+		
+	- 04/06/2019 - v2.0.6
 		New drawing added for VMs with snapshots.
 
 	- 10/22/2018 - v2.0.5
@@ -121,13 +124,13 @@ Function Import-PSCredential {
 #endregion Import-PSCredential 
 #endregion PsCreds
 #region vCenterFunctions
-#region ~~< Connect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Connect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Function Connect_vCenter
 {
 	Connect-VIServer $vCenter -Credential (Import-PSCredential -path $XMLFile)
 }
 #endregion
-#region ~~< Disconnect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Disconnect_vCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Function Disconnect_vCenter
 {
 	Disconnect-ViServer * -Confirm:$False
@@ -609,7 +612,7 @@ function Resource_Pool_Export
 	}
 }
 #endregion
-#region ~~< Snapshot_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Snapshot_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Snapshot_Export
 {
 	$SnapshotExportFile = "$CaptureCsvFolder\$vCenter-SnapshotExport.csv"
@@ -622,6 +625,23 @@ function Snapshot_Export
 	@{ N = "IsCurrent" ; E = { $_.IsCurrent } } | Export-Csv $SnapshotExportFile -Append -NoTypeInformation
 }
 #endregion
+#region ~~< Linked_vCenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Linked_vCenter_Export
+{
+	$LinkedvCenterExportFile = "$CaptureCsvFolder\$vCenter-LinkedvCenterExport.csv"
+	Disconnect-ViServer * -Confirm:$false
+	$global:vCenter = $VcenterTextBox.Text
+	$User = $UserNameTextBox.Text
+	Connect-VIServer $Vcenter -user $User -password $PasswordTextBox.Text -AllLinked
+	$global:DefaultVIServers |
+	Where-Object { $_.Name -ne "$vCenter" } |
+	Select-Object @{ N = "Name" ; E = { $_.Name } }, 
+	@{ N = "Version" ; E = { $_.Version } }, 
+	@{ N = "Build" ; E = { $_.Build } },
+	@{ N = "OsType" ; E = { $_.ExtensionData.Content.About.OsType } },
+	@{ N = "vCenter" ; E = { $vCenter } } | Export-Csv $LinkedvCenterExportFile -Append -NoTypeInformation
+}
+#endregion
 #endregion
 #endregion
 
@@ -630,7 +650,7 @@ Export-PSCredential
 #endregion
 
 #region Tasks
-Connect_vCenter; vCenter_Export; Datacenter_Export; Cluster_Export; VmHost_Export; Vm_Export; Template_Export; DatastoreCluster_Export; Datastore_Export; VsSwitch_Export; VssPort_Export; VssVmk_Export; VssPnic_Export; VdSwitch_Export; VdsPort_Export; VdsVmk_Export; VdsPnic_Export; Folder_Export; Rdm_Export; Drs_Rule_Export; Drs_Cluster_Group_Export; Drs_VmHost_Rule_Export; Resource_Pool_Export; Snapshot_Export; Disconnect_vCenter
+Connect_vCenter; vCenter_Export; Datacenter_Export; Cluster_Export; VmHost_Export; Vm_Export; Template_Export; DatastoreCluster_Export; Datastore_Export; VsSwitch_Export; VssPort_Export; VssVmk_Export; VssPnic_Export; VdSwitch_Export; VdsPort_Export; VdsVmk_Export; VdsPnic_Export; Folder_Export; Rdm_Export; Drs_Rule_Export; Drs_Cluster_Group_Export; Drs_VmHost_Rule_Export; Resource_Pool_Export; Snapshot_Export; Linked_vCenter_Export; Disconnect_vCenter
 #endregion
 
 #region Zip Files
