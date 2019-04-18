@@ -1,27 +1,24 @@
 # vDiagram2.0
 vDiagram 2.0 based off Alan Renouf's vDiagram
 
-.SYNOPSIS
+## SYNOPSIS
+vDiagram Visio Drawing Tool
 
-   vDiagram Visio Drawing Tool
+## DESCRIPTION
+Powershell script that will capture and draw in Visio a VMware Infrastructure.
 
-.DESCRIPTION
+## NOTES
+	File Name	: vDiagram_2.0.7.ps1
+	Author		: Tony Gonzalez
+	Author		: Jason Hopkins
+	Based on	: vDiagram by Alan Renouf
+	Version		: 2.0.7
 
-   Powershell script that will capture and draw in Visio a VMware Infrastructure.
-
-.NOTES 
-  File Name	: vDiagram_2.0.7.ps1 
-  Author		: Tony Gonzalez
-  Author		: Jason Hopkins
-  Based on		: vDiagram by Alan Renouf
-  Version		: 2.0.7
-
-.USAGE NOTES
-
+## USAGE NOTES
 	Directions:
-    1. Ensure to unblock file before unzipping within file properties
-    2. Ensure to run as administrator
-    3. Required Files:
+	1. Ensure to unblock file before unzipping within file properties
+	2. Ensure to run as administrator
+	3. Required Files:
             PowerCLI or PowerShell 5.0 with PowerCLI Modules installed
             Active connection to vCenter to capture data
             MS Visio
@@ -50,7 +47,7 @@ vDiagram 2.0 based off Alan Renouf's vDiagram
       5. Click on "Draw Visio" button.
       6. Click on "Open Visio Drawing" button once "Draw Visio" button says it has completed.
 
-.CHANGE LOG
+## CHANGE LOG
 
 	- 04/15/2019 - v2.0.7
 		New drawing added for Linked vCenters.
