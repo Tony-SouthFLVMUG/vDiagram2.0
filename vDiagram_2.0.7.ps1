@@ -3430,7 +3430,7 @@ function VmHost_Export
 function Vm_Export
 {
 	$VmExportFile = "$CaptureCsvFolder\$vCenter-VmExport.csv"
-	foreach ($Vm in(Get-View -ViewType VirtualMachine -Property Name, Config, Config.Tools, Guest, Guest.Net, Config.Hardware, Summary.Config, Config.DatastoreUrl, Parent, Runtime.Host -Server $vCenter | Sort-Object Name))
+	foreach ($Vm in(Get-View -ViewType VirtualMachine -Property Name, Config, Config.Tools, Guest, Guest.Net, Config.Hardware, Summary.Config, Config.DatastoreUrl, Parent, Runtime.Host, Snapshot, RootSnapshot -Server $vCenter | Sort-Object Name))
 	{
 		$Folder = Get-View -Id $Vm.Parent -Property Name
 		$Vm |
@@ -3460,7 +3460,9 @@ function Vm_Export
 		@{ N = "NumVirtualDisks" ; E = { $_.Summary.Config.NumVirtualDisks } },
 		@{ N = "CpuReservation" ; E = { $_.Summary.Config.CpuReservation } },
 		@{ N = "MemoryReservation" ; E = { $_.Summary.Config.MemoryReservation } },
-		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } } | Export-Csv $VmExportFile -Append -NoTypeInformation
+		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } },
+		@{ N = "Snapshot" ; E = { $_.Snapshot } },
+		@{ N = "RootSnapshot" ; E = { $_.RootSnapshot } } | Export-Csv $VmExportFile -Append -NoTypeInformation
 	}
 }
 #endregion ~~< Vm_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -5599,6 +5601,142 @@ function Datastore_to_Host
 	$AppVisio.Quit()
 }
 #endregion ~~< Datastore_to_Host >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Snapshot_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Snapshot_to_VM
+{
+	$SaveFile = "$VisioFolder" + "\" + "$vCenter" + " VMware vDiagram - " + "$DateTime" + ".vsd"
+	CSV_In_Out
+	
+	$AppVisio = New-Object -ComObject Visio.InvisibleApp
+	$docsObj = $AppVisio.Documents
+	$docsObj.Open($SaveFile) | Out-Null
+	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
+	$Page = $AppVisio.ActivePage.Name = "Snapshot to VM"
+	$Page = $DocsObj.Pages('Snapshot to VM')
+	$pagsObj = $AppVisio.ActiveDocument.Pages
+	$pagObj = $pagsObj.Item('Snapshot to VM')
+	$AppVisio.ScreenUpdating = $False
+	$AppVisio.EventsEnabled = $False
+		
+	# Load a set of stencils and select one to drop
+	Visio_Shapes
+		
+	# Draw Objects
+	$x = 0
+	$y = 1.50
+		
+	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
+	Draw_vCenter		
+		
+	foreach ($Datacenter in $DatacenterImport)
+	{
+		$x = 1.50
+		$y += 1.50
+		$DatacenterObject = Add-VisioObjectDC $DatacenterObj $Datacenter
+		Draw_Datacenter
+		Connect-VisioObject $VCObject $DatacenterObject
+				
+		foreach ($VM in($VmImport | Sort-Object Name | Where-Object { ($_.Snapshot -notlike "") }))
+		{
+			$x = 3.50
+			$y += 1.50
+			if ($VM.OS -eq "")
+			{
+				$VMObject = Add-VisioObjectVM $OtherObj $VM
+				Draw_VM
+			}
+			else
+			{
+				if ($VM.OS.contains("Microsoft") -eq $True)
+				{
+					$VMObject = Add-VisioObjectVM $MicrosoftObj $VM
+					Draw_VM
+				}
+				else
+				{
+					$VMObject = Add-VisioObjectVM $LinuxObj $VM
+					Draw_VM
+				}
+			}
+			Connect-VisioObject $DatacenterObject $VMObject
+			
+			foreach ($ParentSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ( $_.ParentSnapshot -like $null ) }))
+			{
+				$x = 6.00
+				$y += 1.50
+				if ($ParentSnapshot.IsCurrent -eq "FALSE")
+				{
+					$ParentSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ParentSnapshot
+					Draw_ParentSnapshot
+				}
+				else
+				{
+					$ParentSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ParentSnapshot
+					Draw_ParentSnapshot
+				}
+				Connect-VisioObject $VMObject $ParentSnapshotObject 
+				
+				foreach ($ChildSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ($_.ParentSnapshot -like $ParentSnapshot.Name) }))
+				{
+					$x = 8.50
+					$y += 1.50
+					if ($ChildSnapshot.IsCurrent -eq "FALSE")
+					{
+						$ChildSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ChildSnapshot
+						Draw_ChildSnapshot
+					}
+					else
+					{
+						$ChildSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ChildSnapshot
+						Draw_ChildSnapshot
+					}
+					Connect-VisioObject $ParentSnapshotObject $ChildSnapshotObject
+					
+					foreach ($ChildChildSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ($_.ParentSnapshot -like $ChildSnapshot.Name) }))
+					{
+						$x = 11.00
+						$y += 1.50
+						if ($ChildChildSnapshot.IsCurrent -eq "FALSE")
+						{
+							$ChildChildSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ChildChildSnapshot
+							Draw_ChildChildSnapshot
+						}
+						else
+						{
+							$ChildChildSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ChildChildSnapshot
+							Draw_ChildChildSnapshot
+						} 
+						Connect-VisioObject $ChildSnapshotObject $ChildChildSnapshotObject
+						
+						foreach ($ChildChildChildSnapshot in($SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains($VM.Name) -and ($_.ParentSnapshot -like $ChildChildSnapshot.Name) }))
+						{
+							$x += 2.50
+							$y += 1.50
+							if ($ChildChildChildSnapshot.IsCurrent -eq "FALSE")
+							{
+								$ChildChildChildSnapshotObject = Add-VisioObjectSnapshot $SnapshotObj $ChildChildChildSnapshot
+								Draw_ChildChildChildSnapshot
+							}
+							else
+							{
+								$ChildChildChildSnapshotObject = Add-VisioObjectSnapshot $CurrentSnapshotObj $ChildChildChildSnapshot
+								Draw_ChildChildChildSnapshot
+							}
+							Connect-VisioObject $ChildChildSnapshotObject $ChildChildChildSnapshotObject
+							$ChildChildSnapshotObject = $ChildChildChildSnapshotObject	
+						}
+					}
+				}
+			}
+		}	
+	}
+
+	# Resize to fit page
+	$pagObj.ResizeToFitContents()
+	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
+	$AppVisio.Quit()
+}
+#endregion ~~< Snapshot_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< PhysicalNIC_to_vSwitch >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function PhysicalNIC_to_vSwitch
 {
@@ -6487,87 +6625,6 @@ function Cluster_to_DRS_Rule
 	$AppVisio.Quit()
 }
 #endregion ~~< Cluster_to_DRS_Rule >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#region ~~< Snapshot_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function Snapshot_to_VM
-{
-	$SaveFile = "$VisioFolder" + "\" + "$vCenter" + " VMware vDiagram - " + "$DateTime" + ".vsd"
-	CSV_In_Out
-	
-	$AppVisio = New-Object -ComObject Visio.InvisibleApp
-	$docsObj = $AppVisio.Documents
-	$docsObj.Open($SaveFile) | Out-Null
-	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "Snapshot to VM"
-	$Page = $DocsObj.Pages('Snapshot to VM')
-	$pagsObj = $AppVisio.ActiveDocument.Pages
-	$pagObj = $pagsObj.Item('Snapshot to VM')
-	$AppVisio.ScreenUpdating = $False
-	$AppVisio.EventsEnabled = $False
-		
-	# Load a set of stencils and select one to drop
-	Visio_Shapes
-		
-	# Draw Objects
-	$x = 0
-	$y = 1.50
-		
-	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
-	Draw_vCenter		
-		
-	foreach ($Datacenter in ($DatacenterImport | Sort-Object Name) )
-	{
-		$x = 1.50
-		$y += 1.50
-		$DatacenterObject = Add-VisioObjectDC $DatacenterObj $Datacenter
-		Draw_Datacenter
-		Connect-VisioObject $VCObject $DatacenterObject
-				
-		foreach ($Cluster in($ClusterImport | Sort-Object Name | Where-Object { $_.Datacenter.contains($Datacenter.Name) }))
-		{
-			$x = 3.50
-			$y += 1.50
-			$ClusterObject = Add-VisioObjectCluster $ClusterObj $Cluster
-			Draw_Cluster
-			Connect-VisioObject $DatacenterObject $ClusterObject
-			$y += 1.50
-						
-			foreach ($DRSRule in($DrsRuleImport | Where-Object { $_.Cluster.contains($Cluster.Name) }))
-			{
-				$x = 6.00
-				$y += 1.50
-				$DRSObject = Add-VisioObjectDrsRule $DRSRuleObj $DRSRule
-				Draw_DrsRule
-				Connect-VisioObject $ClusterObject $DRSObject
-				$y += 1.50
-			}		
-			foreach ($DrsVmHostRule in($DrsVmHostImport | Where-Object { $_.Cluster.contains($Cluster.Name) }))
-			{
-				$x = 6.00
-				$y += 1.50
-				$DRSVMHostRuleObject = Add-VisioObjectDRSVMHostRule $DRSVMHostRuleObj $DrsVmHostRule
-				Draw_DrsVmHostRule
-				Connect-VisioObject $ClusterObject $DRSVMHostRuleObject
-				$y += 1.50
-				
-				foreach ($DrsClusterGroup in($DrsClusterGroupImport | Where-Object { $_.Name.contains($DrsVmHostRule.VMHostGroup) }))
-				{
-					$x += 2.50
-					$DrsClusterGroupObject = Add-VisioObjectDrsClusterGroup $DRSClusterGroupObj $DrsClusterGroup
-					Draw_DrsClusterGroup
-					Connect-VisioObject $DRSVMHostRuleObject $DrsClusterGroupObject
-					$DRSVMHostRuleObject = $DrsClusterGroupObject
-					
-				}
-			}
-		}
-	}
-		
-	# Resize to fit page
-	$pagObj.ResizeToFitContents()
-	$AppVisio.Documents.SaveAs($SaveFile) | Out-Null
-	$AppVisio.Quit()
-}
-#endregion ~~< Snapshot_to_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #endregion ~~< Visio Pages Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Open Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Open_Capture_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
