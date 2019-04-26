@@ -4547,21 +4547,79 @@ function Draw_DrsClusterGroup
 	$DrsClusterGroupObject.Cells("Prop.Member").Formula = '"' + $DrsClusterGroup.Member + '"'
 }
 #endregion ~~< Draw_DrsClusterGroup >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#region ~~< Draw_Snapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function Draw_Snapshot
+#region ~~< Draw_ParentSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Draw_ParentSnapshot
 {
 	# Name
-	$SnapshotObject.Cells("Prop.Name").Formula = '"' + $Snapshot.Name + '"'
+	$ParentSnapshotObject.Cells("Prop.Name").Formula = '"' + $ParentSnapshot.Name + '"'
 	# Created
-	$SnapshotObject.Cells("Prop.Created").Formula = '"' + $Snapshot.Created + '"'
+	$ParentSnapshotObject.Cells("Prop.Created").Formula = '"' + $ParentSnapshot.Created + '"'
 	# Children
-	$SnapshotObject.Cells("Prop.Children").Formula = '"' + $Snapshot.Children + '"'
+	$ParentSnapshotObject.Cells("Prop.Children").Formula = '"' + $ParentSnapshot.Children + '"'
 	# ParentSnapshot
-	$SnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $Snapshot.ParentSnapshot + '"'
+	$ParentSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ParentSnapshot.ParentSnapshot + '"'
 	# IsCurrent
-	$SnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $Snapshot.IsCurrent + '"'
+	$ParentSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ParentSnapshot.IsCurrent + '"'
 }
-#endregion ~~< Draw_Snapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#endregion ~~< Draw_ParentSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Draw_ChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Draw_ChildSnapshot
+{
+	# Name
+	$ChildSnapshotObject.Cells("Prop.Name").Formula = '"' + $ChildSnapshot.Name + '"'
+	# Created
+	$ChildSnapshotObject.Cells("Prop.Created").Formula = '"' + $ChildSnapshot.Created + '"'
+	# Children
+	$ChildSnapshotObject.Cells("Prop.Children").Formula = '"' + $ChildSnapshot.Children + '"'
+	# ParentSnapshot
+	$ChildSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ChildSnapshot.ParentSnapshot + '"'
+	# IsCurrent
+	$ChildSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ChildSnapshot.IsCurrent + '"'
+}
+#endregion ~~< Draw_ChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Draw_ChildChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Draw_ChildChildSnapshot
+{
+	# Name
+	$ChildChildSnapshotObject.Cells("Prop.Name").Formula = '"' + $ChildChildSnapshot.Name + '"'
+	# Created
+	$ChildChildSnapshotObject.Cells("Prop.Created").Formula = '"' + $ChildChildSnapshot.Created + '"'
+	# Children
+	$ChildChildSnapshotObject.Cells("Prop.Children").Formula = '"' + $ChildChildSnapshot.Children + '"'
+	# ParentSnapshot
+	$ChildChildSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ChildChildSnapshot.ParentSnapshot + '"'
+	# IsCurrent
+	$ChildChildSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ChildChildSnapshot.IsCurrent + '"'
+}
+#endregion ~~< Draw_ChildChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Draw_Draw_ChildChildChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Draw_ChildChildChildSnapshot
+{
+	# Name
+	$ChildChildChildSnapshotObject.Cells("Prop.Name").Formula = '"' + $ChildChildChildSnapshot.Name + '"'
+	# Created
+	$ChildChildChildSnapshotObject.Cells("Prop.Created").Formula = '"' + $ChildChildChildSnapshot.Created + '"'
+	# Children
+	$ChildChildChildSnapshotObject.Cells("Prop.Children").Formula = '"' + $ChildChildChildSnapshot.Children + '"'
+	# ParentSnapshot
+	$ChildChildChildSnapshotObject.Cells("Prop.ParentSnapshot").Formula = '"' + $ChildChildChildSnapshot.ParentSnapshot + '"'
+	# IsCurrent
+	$ChildChildChildSnapshotObject.Cells("Prop.IsCurrent").Formula = '"' + $ChildChildChildSnapshot.IsCurrent + '"'
+}
+#endregion ~~< Draw_Draw_ChildChildChildSnapshot >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#region ~~< Draw_LinkedvCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Draw_LinkedvCenter
+{
+	# Name
+	$LinkedvCenterObject.Cells("Prop.Name").Formula = '"' + $LinkedvCenter.Name + '"'
+	# Version
+	$LinkedvCenterObject.Cells("Prop.Version").Formula = '"' + $LinkedvCenter.Version + '"'
+	# Build
+	$LinkedvCenterObject.Cells("Prop.Build").Formula = '"' + $LinkedvCenter.Build + '"'
+	# OsType
+	$LinkedvCenterObject.Cells("Prop.OsType").Formula = '"' + $LinkedvCenter.OsType + '"'
+}
+#endregion ~~< Draw_LinkedvCenter >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #endregion ~~< Visio Draw Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CSV >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< CSV_In_Out >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4744,11 +4802,12 @@ function vCenter_to_LinkedvCenter
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
 	
-	foreach ($LinkedvCenter in $LinkedvCenterImport | Sort-Object Name | Where-Object { $_.Name -ne "$vCenter" })
+	foreach ( $LinkedvCenter in ( $LinkedvCenterImport | Sort-Object Name ) )
 	{
 		$x += 2.50
-		$LinkedvCenterObject = Add-VisioObjectDC $VCObj $LinkedvCenter
-		Draw_vCenter
+		$LinkedvCenterObject = Add-VisioObjectVC $VCObj $LinkedvCenter
+		#Draw_vCenter
+		Draw_LinkedvCenter
 		Connect-VisioObject $VCObject $LinkedvCenterObject
 		$VCObject = $LinkedvCenterObject
 	}
