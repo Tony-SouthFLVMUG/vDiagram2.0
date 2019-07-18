@@ -20,11 +20,11 @@ Powershell script that will capture and draw in Visio a VMware Infrastructure.
 	5. Follow directions listed below in "Usage Notes".
 
 ## NOTES
-	File Name	: vDiagram_2.0.7.ps1
+	File Name	: vDiagram_2.0.8.ps1
 	Author		: Tony Gonzalez
 	Author		: Jason Hopkins
 	Based on	: vDiagram by Alan Renouf
-	Version		: 2.0.7
+	Version		: 2.0.8
 
 ## USAGE NOTES
 	Directions:
@@ -61,6 +61,11 @@ Powershell script that will capture and draw in Visio a VMware Infrastructure.
 
 ## CHANGE LOG
 
+	- 07/17/2019 - v2.0.8
+		Typo found out capture output.
+		Added CpuHotRemoveEnabled, CpuHotAddEnabled & MemoryHotAddEnabled to VM & Template outputs.
+		Added additional properties to VMHost object.
+		
 	- 04/15/2019 - v2.0.7
 		New drawing added for Linked vCenters.
 		
