@@ -6,11 +6,11 @@
    vDiagram Visio Drawing Tool
 
 .NOTES 
-   File Name	: vDiagram_2.0.7.ps1 
+   File Name	: vDiagram_2.0.8.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.7
+   Version		: 2.0.8
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -21,6 +21,10 @@
 		MS Visio
 
 .CHANGE LOG
+	- 07/17/2019 - v2.0.8
+		Typo found out capture output. Added CpuHotRemoveEnabled, CpuHotAddEnabled & MemoryHotAddEnabled to VM & Template outputs.
+		Added additional properties to VMHost object.
+		
 	- 04/15/2019 - v2.0.7
 		New drawing added for Linked vCenters.
 		
@@ -67,8 +71,8 @@
 #region ~~< Post-Constructor Custom Code >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< About >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DateTime = (Get-Date -format "yyyy_MM_dd-HH_mm")
-$MyVer = "2.0.7"
-$LastUpdated = "April 15, 2019"
+$MyVer = "2.0.8"
+$LastUpdated = "July  12, 2019"
 $About = 
 @"
 
@@ -3382,7 +3386,7 @@ function Cluster_Export
 	@{ N = "AdmissionControlPolicyMemoryFailoverResourcesPercent" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.MemoryFailoverResourcesPercent } }, 
 	@{ N = "AdmissionControlPolicyFailoverLevel" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.FailoverLevel } }, 
 	@{ N = "AdmissionControlPolicyAutoComputePercentages" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.AutoComputePercentages } }, 
-	@{ N = "AdmissionControlPolicyResourceDarkCyanuctionToToleratePercent" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.ResourceDarkCyanuctionToToleratePercent } }, 
+	@{ N = "AdmissionControlPolicyResourceReductionToToleratePercent" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.ResourceReductionToToleratePercent } }, 
 	@{ N = "DrsEnabled" ; E = { $_.DrsEnabled } }, 
 	@{ N = "DrsAutomationLevel" ; E = { $_.DrsAutomationLevel } }, 
 	@{ N = "VmMonitoring" ; E = { $_.ExtensionData.configuration.dasconfig.VmMonitoring } }, 
@@ -3393,37 +3397,72 @@ function Cluster_Export
 function VmHost_Export
 {
 	$VmHostExportFile = "$CaptureCsvFolder\$vCenter-VmHostExport.csv"
-	Get-View -ViewType HostSystem -Property Name, Config.Product, Summary.Hardware, Summary, Parent, Config.Network |
-	Select-Object @{ N = "Name" ; E = { $_.Name } }, 
-	@{	N = "Datacenter" ; E = { $Datacenter = Get-View -Id $_.Parent -Property Name, Parent
-			while ($Datacenter -isnot [VMware.Vim.Datacenter] -and $Datacenter.Parent)
-			{
-				$Datacenter = Get-View -Id $Datacenter.Parent -Property Name, Parent
-			}
-			if ($Datacenter -is [VMware.Vim.Datacenter])
-			{
-			$Datacenter.Name } } }, 
-	@{ N = "Cluster" ; E = { $Cluster = Get-View -Id $_.Parent -Property Name, Parent
-			while ($Cluster -isnot [VMware.Vim.ClusterComputeResource] -and $Cluster.Parent)
-			{
-				$Cluster = Get-View -Id $Cluster.Parent -Property Name, Parent
-			}
-			if ($Cluster -is [VMware.Vim.ClusterComputeResource]) { $Cluster.Name } } },
-	@{ N = "Version" ; E = { $_.Config.Product.Version } },
-	@{ N = "Build" ; E = { $_.Config.Product.Build } },
-	@{ N = "Manufacturer" ; E = { $_.Summary.Hardware.Vendor } },
-	@{ N = "Model" ; E = { $_.Summary.Hardware.Model } },
-	@{ N = "ProcessorType" ; E = { $_.Summary.Hardware.CpuModel } },
-	@{ N = "CpuMhz" ; E = { $_.Summary.Hardware.CpuMhz } },
-	@{ N = "NumCpuPkgs" ; E = { $_.Summary.Hardware.NumCpuPkgs } },
-	@{ N = "NumCpuCores" ; E = { $_.Summary.Hardware.NumCpuCores } },
-	@{ N = "NumCpuThreads" ; E = { $_.Summary.Hardware.NumCpuThreads } },
-	@{ N = "Memory" ; E = { [math]::Round([decimal]$_.Summary.Hardware.MemorySize / 1073741824) } },
-	@{ N = "MaxEVCMode" ; E = { $_.Summary.MaxEVCModeKey } },
-	@{ N = "NumNics" ; E = { $_.Summary.Hardware.NumNics } },
-	@{ N = "IP" ; E = { [string]::Join(", ", ($_.Config.Network.Vnic.Spec.Ip.IpAddress)) } },
-	@{ N = "MacAddress" ; E = { [string]::Join(", ", ($_.Config.Network.Vnic.Spec.Mac)) } },
-	@{ N = "NumHBAs" ; E = { $_.Summary.Hardware.NumHBAs } } | Export-Csv $VmHostExportFile -Append -NoTypeInformation
+	$ServiceInstance = Get-View ServiceInstance
+	$LicenseManager = Get-View $ServiceInstance.Content.LicenseManager
+	$LicenseAssignmentManager = Get-View $LicenseManager.LicenseAssignmentManager
+	Get-View -ViewType HostSystem -Property Name, Config.Product, Summary.Hardware, Summary, Parent, Config.Network, Config.Host.Value | Sort Name |
+		Select-Object @{ N = "Name" ; E = { $_.Name } }, 
+		@{	N = "Datacenter" ; E = { $Datacenter = Get-View -Id $_.Parent -Property Name, Parent
+				while ($Datacenter -isnot [VMware.Vim.Datacenter] -and $Datacenter.Parent)
+				{
+					$Datacenter = Get-View -Id $Datacenter.Parent -Property Name, Parent
+				}
+				if ($Datacenter -is [VMware.Vim.Datacenter])
+				{
+				$Datacenter.Name } } }, 
+		@{ N = "Cluster" ; E = { $Cluster = Get-View -Id $_.Parent -Property Name, Parent
+				while ($Cluster -isnot [VMware.Vim.ClusterComputeResource] -and $Cluster.Parent)
+				{
+					$Cluster = Get-View -Id $Cluster.Parent -Property Name, Parent
+				}
+				if ($Cluster -is [VMware.Vim.ClusterComputeResource]) { $Cluster.Name } } },
+		@{ N = "Version" ; E = { $_.Config.Product.Version } },
+		@{ N = "Build" ; E = { $_.Config.Product.Build } },
+		@{ N = "Manufacturer" ; E = { $_.Summary.Hardware.Vendor } },
+		@{ N = "Model" ; E = { $_.Summary.Hardware.Model } },
+		@{ N = "LicenseType" ; E = { $LicenseAssignmentManager.QueryAssignedLicenses($_.Config.Host.Value).AssignedLicense.Name  } },
+		@{ N = "BiosVersion" ; E = { (Get-VMHost $_.Name | Get-VMHostHardware -WaitForAllData -SkipAllSslCertificateChecks -ErrorAction SilentlyContinue).BiosVersion } },
+		@{ N = "BIOSReleaseDate" ; E = { (((Get-VMHost $_.Name).ExtensionData.Hardware.BiosInfo.ReleaseDate -split " ")[0]) } },
+		@{ N = "ProcessorType" ; E = { $_.Summary.Hardware.CpuModel } },
+		@{ N = "CpuMhz" ; E = { $_.Summary.Hardware.CpuMhz } },
+		@{ N = "NumCpuPkgs" ; E = { $_.Summary.Hardware.NumCpuPkgs } },
+		@{ N = "NumCpuCores" ; E = { $_.Summary.Hardware.NumCpuCores } },
+		@{ N = "NumCpuThreads" ; E = { $_.Summary.Hardware.NumCpuThreads } },
+		@{ N = "Memory" ; E = { [math]::Round([decimal]$_.Summary.Hardware.MemorySize / 1073741824) } },
+		@{ N = "MaxEVCMode" ; E = { $_.Summary.MaxEVCModeKey } },
+		@{ N = "NumNics" ; E = { $_.Summary.Hardware.NumNics } },
+		@{ N = "ManagemetIP" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty IP } },
+		@{ N = "ManagemetMacAddress" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Mac } },
+		@{ N = "ManagemetVMKernel" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Name } },
+		@{ N = "ManagemetSubnetMask" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask } },
+		@{ N = "vMotionIP" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty IP)) } },
+		@{ N = "vMotionMacAddress" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty Mac)) } },
+		@{ N = "vMotionVMKernel" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty Name)) } },
+		@{ N = "vMotionSubnetMask" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask)) } },
+		@{ N = "FtIP" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty IP)) } },
+		@{ N = "FtMacAddress" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty Mac)) } },
+		@{ N = "FtVMKernel" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty Name)) } },
+		@{ N = "FtSubnetMask" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask)) } },
+		@{ N = "VSANIP" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty IP)) } },
+		@{ N = "VSANMacAddress" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Mac)) } },
+		@{ N = "VSANVMKernel" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Name)) } },
+		@{ N = "VSANSubnetMask" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask)) } },
+		@{ N = "NumHBAs" ; E = { $_.Summary.Hardware.NumHBAs } },
+		@{ N = "iSCSIIP" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).IPv4) } },
+		@{ N = "iSCSIMac" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).MACAddress) } },
+		@{ N = "iSCSIVMKernel" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).Vmknic) } },
+		@{ N = "iSCSISubnetMask" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).IPv4SubnetMask) } },
+		@{ N = "iSCSIAdapter" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).Adapter) } },
+		@{ N = "iSCSILinkUp" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).LinkUp) } },
+		@{ N = "iSCSIMTU" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).MTU) } },
+		@{ N = "iSCSINICDriver" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).NICDriver) } },
+		@{ N = "iSCSINICDriverVersion" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).NICDriverVersion) } },
+		@{ N = "iSCSINICFirmwareVersion" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).NICFirmwareVersion) } },
+		@{ N = "iSCSIPathStatus" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).PathStatus) } },
+		@{ N = "iSCSIVlanID" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).VlanID) } },
+		@{ N = "iSCSIVswitch" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).Vswitch) } },
+		@{ N = "iSCSICompliantStatus" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).CompliantStatus) } },
+		@{ N = "IScsiName" ; E = { (Get-VMHost $_.Name | Get-VMHostHBA -Type IScsi).IScsiName } } | Export-Csv $VmHostExportFile -Append -NoTypeInformation
 }
 #endregion ~~< VmHost_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Vm_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3460,6 +3499,9 @@ function Vm_Export
 		@{ N = "NumVirtualDisks" ; E = { $_.Summary.Config.NumVirtualDisks } },
 		@{ N = "CpuReservation" ; E = { $_.Summary.Config.CpuReservation } },
 		@{ N = "MemoryReservation" ; E = { $_.Summary.Config.MemoryReservation } },
+		@{ N = "CpuHotAddEnabled" ; E = { $_.Config.CpuHotAddEnabled } },
+		@{ N = "CpuHotRemoveEnabled" ; E = { $_.Config.CpuHotRemoveEnabled } },
+		@{ N = "MemoryHotAddEnabled" ; E = { $_.Config.MemoryHotAddEnabled } },
 		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } },
 		@{ N = "Snapshot" ; E = { $_.Snapshot } },
 		@{ N = "RootSnapshot" ; E = { $_.RootSnapshot } } | Export-Csv $VmExportFile -Append -NoTypeInformation
@@ -3492,7 +3534,10 @@ function Template_Export
 		@{ N = "NumEthernetCards" ; E = { $_.ExtensionData.Summary.Config.NumEthernetCards } },
 		@{ N = "NumVirtualDisks" ; E = { $_.ExtensionData.Summary.Config.NumVirtualDisks } },
 		@{ N = "CpuReservation" ; E = { $_.ExtensionData.Summary.Config.CpuReservation } },
-		@{ N = "MemoryReservation" ; E = { $_.ExtensionData.Summary.Config.MemoryReservation } } | Export-Csv $TemplateExportFile -Append -NoTypeInformation
+		@{ N = "MemoryReservation" ; E = { $_.ExtensionData.Summary.Config.MemoryReservation } },
+		@{ N = "CpuHotAddEnabled" ; E = { $_.ExtensionData.Config.CpuHotAddEnabled } },
+		@{ N = "CpuHotRemoveEnabled" ; E = { $_.ExtensionData.Config.CpuHotRemoveEnabled } },
+		@{ N = "MemoryHotAddEnabled" ; E = { $_.ExtensionData.Config.MemoryHotAddEnabled } } | Export-Csv $TemplateExportFile -Append -NoTypeInformation
 	}
 }
 #endregion ~~< Template_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3519,8 +3564,8 @@ function Datastore_Export
 	@{ N = "Datacenter" ; E = { $_.Datacenter } },
 	@{ N = "Cluster" ; E = { Get-Datastore $_.Name | Get-VmHost | Get-Cluster } },
 	@{ N = "DatastoreCluster" ; E = { Get-DatastoreCluster -Datastore $_.Name } },
-	@{ N = "VmHost" ; E = { Get-VmHost -Datastore $_.Name } },
-	@{ N = "Vm" ; E = { Get-Datastore $_.Name | Get-Vm } },
+	@{ N = "VmHost" ; E = { [string]::Join(", ", ( Get-VmHost -Datastore $_.Name)) } },
+	@{ N = "Vm" ; E = { [string]::Join(", ", ( Get-Vm -Datastore $_.Name)) } },
 	@{ N = "Type" ; E = { $_.Type } },
 	@{ N = "FileSystemVersion" ; E = { $_.FileSystemVersion } },
 	@{ N = "DiskName" ; E = { $_.ExtensionData.Info.VMFS.Extent.DiskName } },
@@ -3549,8 +3594,8 @@ function VsSwitch_Export
 	@{ N = "ReversePolicy" ; E = { $_.ExtensionData.Spec.Policy.NicTeaming.ReversePolicy } }, 
 	@{ N = "NotifySwitches" ; E = { $_.ExtensionData.Spec.Policy.NicTeaming.NotifySwitches } }, 
 	@{ N = "RollingOrder" ; E = { $_.ExtensionData.Spec.Policy.NicTeaming.RollingOrder } }, 
-	@{ N = "ActiveNic" ; E = { $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.ActiveNic } }, 
-	@{ N = "StandbyNic" ; E = { $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.StandbyNic } } | Export-Csv $VsSwitchExportFile -Append -NoTypeInformation
+	@{ N = "ActiveNic" ; E = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.ActiveNic)) } }, 
+	@{ N = "StandbyNic" ; E = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.StandbyNic)) } } | Export-Csv $VsSwitchExportFile -Append -NoTypeInformation
 }
 #endregion ~~< VsSwitch_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< VssPort_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3568,8 +3613,8 @@ function VssPort_Export
 			@{ N = "VmHost" ; E = { $VMHost.Name } }, 
 			@{ N = "VsSwitch" ; E = { $VsSwitch.Name } }, 
 			@{ N = "VLanId" ; E = { $_.VLanId } }, 
-			@{ N = "ActiveNic" ; E = { $_.ExtensionData.ComputedPolicy.NicTeaming.NicOrder.ActiveNic } }, 
-			@{ N = "StandbyNic" ; E = { $_.ExtensionData.ComputedPolicy.NicTeaming.NicOrder.StandbyNic } } | Export-Csv $VssPortGroupExportFile -Append -NoTypeInformation
+			@{ N = "ActiveNic" ; E = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.NicOrder.ActiveNic)) } }, 
+			@{ N = "StandbyNic" ; E = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.NicOrder.StandbyNic)) } } | Export-Csv $VssPortGroupExportFile -Append -NoTypeInformation
 		}
 	}
 }
@@ -3658,8 +3703,8 @@ function VdsPort_Export
 			@{ N = "VlanConfiguration" ; E = { $_.VlanConfiguration } }, 
 			@{ N = "VdSwitch" ; E = { $_.VdSwitch } }, 
 			@{ N = "NumPorts" ; E = { $_.NumPorts } }, 
-			@{ N = "ActiveUplinkPort" ; E = { $_.ExtensionData.Config.DefaultPortConfig.UplinkTeamingPolicy.UplinkPortOrder.ActiveUplinkPort } }, 
-			@{ N = "StandbyUplinkPort" ; E = { $_.ExtensionData.Config.DefaultPortConfig.UplinkTeamingPolicy.UplinkPortOrder.StandbyUplinkPort } }, 
+			@{ N = "ActiveUplinkPort" ; E = { [string]::Join(", ", ( $_.ExtensionData.Config.DefaultPortConfig.UplinkTeamingPolicy.UplinkPortOrder.ActiveUplinkPort)) } }, 
+			@{ N = "StandbyUplinkPort" ; E = { [string]::Join(", ", ( $_.ExtensionData.Config.DefaultPortConfig.UplinkTeamingPolicy.UplinkPortOrder.StandbyUplinkPort)) } }, 
 			@{ N = "Policy" ; E = { $_.ExtensionData.Config.DefaultPortConfig.UplinkTeamingPolicy.Policy.Value } }, 
 			@{ N = "ReversePolicy" ; E = { $_.ExtensionData.Config.DefaultPortConfig.UplinkTeamingPolicy.ReversePolicy.Value } }, 
 			@{ N = "NotifySwitches" ; E = { $_.ExtensionData.Config.DefaultPortConfig.UplinkTeamingPolicy.NotifySwitches.Value } }, 
@@ -4120,10 +4165,14 @@ function Draw_VmHost
 	$HostObject.Cells("Prop.Manufacturer").Formula = '"' + $VMHost.Manufacturer + '"'
 	# Model
 	$HostObject.Cells("Prop.Model").Formula = '"' + $VMHost.Model + '"'
+	# LicenseType
+	$HostObject.Cells("Prop.LicenseType").Formula = '"' + $VMHost.LicenseType + '"'
+	# BiosVersion
+	$HostObject.Cells("Prop.BiosVersion").Formula = '"' + $VMHost.BiosVersion + '"'
+	# BIOSReleaseDate
+	$HostObject.Cells("Prop.BIOSReleaseDate").Formula = '"' + $VMHost.BIOSReleaseDate + '"'
 	# ProcessorType
 	$HostObject.Cells("Prop.ProcessorType").Formula = '"' + $VMHost.ProcessorType + '"'
-	# MaxEVCMode
-	$HostObject.Cells("Prop.MaxEVCMode").Formula = '"' + $VMHost.MaxEVCMode + '"'
 	# CpuMhz
 	$HostObject.Cells("Prop.CpuMhz").Formula = '"' + $VMHost.CpuMhz + '"'
 	# NumCpuPkgs
@@ -4134,14 +4183,74 @@ function Draw_VmHost
 	$HostObject.Cells("Prop.NumCpuThreads").Formula = '"' + $VMHost.NumCpuThreads + '"'
 	# Memory
 	$HostObject.Cells("Prop.Memory").Formula = '"' + $VMHost.Memory + '"'
+	# MaxEVCMode
+	$HostObject.Cells("Prop.MaxEVCMode").Formula = '"' + $VMHost.MaxEVCMode + '"'
 	# NumNics
 	$HostObject.Cells("Prop.NumNics").Formula = '"' + $VMHost.NumNics + '"'
-	# IP
-	$HostObject.Cells("Prop.IP").Formula = '"' + $VMHost.IP + '"'
-	# MacAddress
-	$HostObject.Cells("Prop.Mac").Formula = '"' + $VMHost.MacAddress + '"'
+	# ManagemetIP
+	$HostObject.Cells("Prop.ManagemetIP").Formula = '"' + $VMHost.ManagemetIP + '"'
+	# ManagemetMacAddress
+	$HostObject.Cells("Prop.ManagemetMacAddress").Formula = '"' + $VMHost.ManagemetMacAddress + '"'
+	# ManagemetVMKernel
+	$HostObject.Cells("Prop.ManagemetVMKernel").Formula = '"' + $VMHost.ManagemetVMKernel + '"'
+	# ManagemetSubnetMask
+	$HostObject.Cells("Prop.ManagemetSubnetMask").Formula = '"' + $VMHost.ManagemetSubnetMask + '"'
+	# vMotionIP
+	$HostObject.Cells("Prop.vMotionIP").Formula = '"' + $VMHost.vMotionIP + '"'
+	# vMotionMacAddress
+	$HostObject.Cells("Prop.vMotionMacAddress").Formula = '"' + $VMHost.vMotionMacAddress + '"'
+	# vMotionVMKernel
+	$HostObject.Cells("Prop.vMotionVMKernel").Formula = '"' + $VMHost.vMotionVMKernel + '"'
+	# vMotionSubnetMask
+	$HostObject.Cells("Prop.vMotionSubnetMask").Formula = '"' + $VMHost.vMotionSubnetMask + '"'
+	# FtIP
+	$HostObject.Cells("Prop.FtIP").Formula = '"' + $VMHost.FtIP + '"'
+	# FtMacAddress
+	$HostObject.Cells("Prop.FtMacAddress").Formula = '"' + $VMHost.FtMacAddress + '"'
+	# FtVMKernel
+	$HostObject.Cells("Prop.FtVMKernel").Formula = '"' + $VMHost.FtVMKernel + '"'
+	# FtSubnetMask
+	$HostObject.Cells("Prop.FtSubnetMask").Formula = '"' + $VMHost.FtSubnetMask + '"'
+	# VSANIP
+	$HostObject.Cells("Prop.VSANIP").Formula = '"' + $VMHost.VSANIP + '"'
+	# VSANMacAddress
+	$HostObject.Cells("Prop.VSANMacAddress").Formula = '"' + $VMHost.VSANMacAddress + '"'
+	# VSANVMKernel
+	$HostObject.Cells("Prop.VSANVMKernel").Formula = '"' + $VMHost.VSANVMKernel + '"'
+	# VSANSubnetMask
+	$HostObject.Cells("Prop.VSANSubnetMask").Formula = '"' + $VMHost.VSANSubnetMask + '"'
 	# NumHBAs
 	$HostObject.Cells("Prop.NumHBAs").Formula = '"' + $VMHost.NumHBAs + '"'
+	# iSCSIIP
+	$HostObject.Cells("Prop.iSCSIIP").Formula = '"' + $VMHost.iSCSIIP + '"'
+	# iSCSIMac
+	$HostObject.Cells("Prop.iSCSIMac").Formula = '"' + $VMHost.iSCSIMac + '"'
+	# iSCSIVMKernel
+	$HostObject.Cells("Prop.iSCSIVMKernel").Formula = '"' + $VMHost.iSCSIVMKernel + '"'
+	# iSCSISubnetMask
+	$HostObject.Cells("Prop.iSCSISubnetMask").Formula = '"' + $VMHost.iSCSISubnetMask + '"'
+	# iSCSIAdapter
+	$HostObject.Cells("Prop.iSCSIAdapter").Formula = '"' + $VMHost.iSCSIAdapter + '"'
+	# iSCSILinkUp
+	$HostObject.Cells("Prop.iSCSILinkUp").Formula = '"' + $VMHost.iSCSILinkUp + '"'
+	# iSCSIMTU
+	$HostObject.Cells("Prop.iSCSIMTU").Formula = '"' + $VMHost.iSCSIMTU + '"'
+	# iSCSINICDriver
+	$HostObject.Cells("Prop.iSCSINICDriver").Formula = '"' + $VMHost.iSCSINICDriver + '"'
+	# iSCSINICDriverVersion
+	$HostObject.Cells("Prop.iSCSINICDriverVersion").Formula = '"' + $VMHost.iSCSINICDriverVersion + '"'
+	# iSCSINICFirmwareVersion
+	$HostObject.Cells("Prop.iSCSINICFirmwareVersion").Formula = '"' + $VMHost.iSCSINICFirmwareVersion + '"'
+	# iSCSIPathStatus
+	$HostObject.Cells("Prop.iSCSIPathStatus").Formula = '"' + $VMHost.iSCSIPathStatus + '"'
+	# iSCSIVlanID
+	$HostObject.Cells("Prop.iSCSIVlanID").Formula = '"' + $VMHost.iSCSIVlanID + '"'
+	# iSCSIVswitch
+	$HostObject.Cells("Prop.iSCSIVswitch").Formula = '"' + $VMHost.iSCSIVswitch + '"'
+	# iSCSICompliantStatus
+	$HostObject.Cells("Prop.iSCSICompliantStatus").Formula = '"' + $VMHost.iSCSICompliantStatus + '"'
+	# IScsiName
+	$HostObject.Cells("Prop.IScsiName").Formula = '"' + $VMHost.IScsiName + '"'
 }
 #endregion ~~< Draw_VmHost >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VM >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4183,6 +4292,12 @@ function Draw_VM
 	$VMObject.Cells("Prop.CpuReservation").Formula = '"' + $VM.CpuReservation + '"'
 	# MemoryReservation
 	$VMObject.Cells("Prop.MemoryReservation").Formula = '"' + $VM.MemoryReservation + '"'
+	# CpuHotAddEnabled
+	$VMObject.Cells("Prop.CpuHotAddEnabled").Formula = '"' + $VM.CpuHotAddEnabled + '"'
+	# CpuHotRemoveEnabled
+	$VMObject.Cells("Prop.CpuHotRemoveEnabled").Formula = '"' + $VM.CpuHotRemoveEnabled + '"'
+	# MemoryHotAddEnabled
+	$VMObject.Cells("Prop.MemoryHotAddEnabled").Formula = '"' + $VM.MemoryHotAddEnabled + '"'
 	# ProtectionGroup
 	$VMObject.Cells("Prop.ProtectionGroup").Formula = '"' + $VM.ProtectionGroup + '"'
 	# ProtectedVm
@@ -4230,6 +4345,12 @@ function Draw_Template
 	$TemplateObject.Cells("Prop.CpuReservation").Formula = '"' + $Template.CpuReservation + '"'
 	# MemoryReservation
 	$TemplateObject.Cells("Prop.MemoryReservation").Formula = '"' + $Template.MemoryReservation + '"'
+	# CpuHotAddEnabled
+	$TemplateObject.Cells("Prop.CpuHotAddEnabled").Formula = '"' + $Template.CpuHotAddEnabled + '"'
+	# CpuHotRemoveEnabled
+	$TemplateObject.Cells("Prop.CpuHotRemoveEnabled").Formula = '"' + $Template.CpuHotRemoveEnabled + '"'
+	# MemoryHotAddEnabled
+	$TemplateObject.Cells("Prop.MemoryHotAddEnabled").Formula = '"' + $Template.MemoryHotAddEnabled + '"'
 }
 #endregion ~~< Draw_Template >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_Folder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4309,8 +4430,12 @@ function Draw_Datastore
 	$DatastoreObject.Cells("Prop.CapacityGB").Formula = '"' + $Datastore.CapacityGB + '"'
 	# FreeSpaceGB
 	$DatastoreObject.Cells("Prop.FreeSpaceGB").Formula = '"' + $Datastore.FreeSpaceGB + '"'
-	# Vms
-	$DatastoreObject.Cells("Prop.Vms").Formula = '"' + $Datastore.Vms + '"'
+	# Cluster
+	$DatastoreObject.Cells("Prop.Cluster").Formula = '"' + $Datastore.Cluster + '"'
+	# VmHost
+	$DatastoreObject.Cells("Prop.VmHost").Formula = '"' + $Datastore.VmHost + '"'
+	# Vm
+	$DatastoreObject.Cells("Prop.Vm").Formula = '"' + $Datastore.Vm + '"'
 	# State
 	$DatastoreObject.Cells("Prop.State").Formula = '"' + $Datastore.State + '"'
 }
@@ -4378,10 +4503,16 @@ function Draw_VssPnic
 {
 	# Name
 	$VssPNICObject.Cells("Prop.Name").Formula = '"' + $VssPnic.Name + '"'
-	# ConnectedEntity
-	$VssPNICObject.Cells("Prop.ConnectedEntity").Formula = '"' + $VssPnic.ConnectedEntity + '"'
-	# VlanConfiguration
-	$VssPNICObject.Cells("Prop.VlanConfiguration").Formula = '"' + $VssPnic.VlanConfiguration + '"'
+	# Datacenter
+	$VssPNICObject.Cells("Prop.Datacenter").Formula = '"' + $VssPnic.Datacenter + '"'
+	# Cluster
+	$VssPNICObject.Cells("Prop.Cluster").Formula = '"' + $VssPnic.Cluster + '"'
+	# VmHost
+	$VssPNICObject.Cells("Prop.VmHost").Formula = '"' + $VssPnic.VmHost + '"'
+	# VsSwitch
+	$VssPNICObject.Cells("Prop.VsSwitch").Formula = '"' + $VssPnic.VsSwitch + '"'
+	# Mac
+	$VssPNICObject.Cells("Prop.Mac").Formula = '"' + $VssPnic.Mac + '"'
 }
 #endregion ~~< Draw_VssPnic >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VssPort >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4443,17 +4574,21 @@ function Draw_VdSwitch
 function Draw_VdsPnic
 {
 	# Name
-	$VdSwitchObject.Cells("Prop.Name").Formula = '"' + $VdSwitch.Name + '"'
-	# Vendor
-	$VdSwitchObject.Cells("Prop.Vendor").Formula = '"' + $VdSwitch.Vendor + '"'
-	# Version
-	$VdSwitchObject.Cells("Prop.Version").Formula = '"' + $VdSwitch.Version + '"'
-	# NumUplinkPorts
-	$VdSwitchObject.Cells("Prop.NumUplinkPorts").Formula = '"' + $VdSwitch.NumUplinkPorts + '"'
-	# UplinkPortName
-	$VdSwitchObject.Cells("Prop.UplinkPortName").Formula = '"' + $VdSwitch.UplinkPortName + '"'
-	# Mtu
-	$VdSwitchObject.Cells("Prop.Mtu").Formula = '"' + $VdSwitch.Mtu + '"'
+	$VdsPNICObject.Cells("Prop.Name").Formula = '"' + $VdsPnic.Name + '"'
+	# Datacenter
+	$VdsPNICObject.Cells("Prop.Datacenter").Formula = '"' + $VdsPnic.Datacenter + '"'
+	# Cluster
+	$VdsPNICObject.Cells("Prop.Cluster").Formula = '"' + $VdsPnic.Cluster + '"'
+	# VmHost
+	$VdsPNICObject.Cells("Prop.VmHost").Formula = '"' + $VdsPnic.VmHost + '"'
+	# VdSwitch
+	$VdsPNICObject.Cells("Prop.VdSwitch").Formula = '"' + $VdsPnic.VdSwitch + '"'
+	# Portgroup
+	$VdsPNICObject.Cells("Prop.Portgroup").Formula = '"' + $VdsPnic.Portgroup + '"'
+	# ConnectedEntity
+	$VdsPNICObject.Cells("Prop.ConnectedEntity").Formula = '"' + $VdsPnic.ConnectedEntity + '"'
+	# VlanConfiguration
+	$VdsPNICObject.Cells("Prop.VlanConfiguration").Formula = '"' + $VdsPnic.VlanConfiguration + '"'
 }
 #endregion ~~< Draw_VdsPnic >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #region ~~< Draw_VdsPort >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

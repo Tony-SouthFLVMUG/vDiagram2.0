@@ -6,11 +6,11 @@
    vDiagram Scheduled Export
 
 .NOTES 
-   File Name	: vDiagram_Scheduled_Task_2.0.7.ps1 
+   File Name	: vDiagram_Scheduled_Task_2.0.8.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.7
+   Version		: 2.0.8
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -20,6 +20,10 @@
 		Active connection to vCenter to capture data
 
 .CHANGE LOG
+	- 07/17/2019 - v2.0.8
+		Typo found out capture output. Added CpuHotRemoveEnabled, CpuHotAddEnabled & MemoryHotAddEnabled to VM & Template outputs.
+		Added additional properties to VMHost object.
+		
 	- 04/15/2019 - v2.0.7
 		New drawing added for linked vCenters.
 		
@@ -170,7 +174,7 @@ function Cluster_Export
 	@{ N = "AdmissionControlPolicyMemoryFailoverResourcesPercent" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.MemoryFailoverResourcesPercent } }, 
 	@{ N = "AdmissionControlPolicyFailoverLevel" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.FailoverLevel } }, 
 	@{ N = "AdmissionControlPolicyAutoComputePercentages" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.AutoComputePercentages } }, 
-	@{ N = "AdmissionControlPolicyResourceDarkCyanuctionToToleratePercent" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.ResourceDarkCyanuctionToToleratePercent } }, 
+	@{ N = "AdmissionControlPolicyResourceReductionToToleratePercent" ; E = { $_.ExtensionData.configuration.dasconfig.AdmissionControlPolicy.ResourceReductionToToleratePercent } }, 
 	@{ N = "DrsEnabled" ; E = { $_.DrsEnabled } }, 
 	@{ N = "DrsAutomationLevel" ; E = { $_.DrsAutomationLevel } }, 
 	@{ N = "VmMonitoring" ; E = { $_.ExtensionData.configuration.dasconfig.VmMonitoring } }, 
@@ -181,37 +185,72 @@ function Cluster_Export
 function VmHost_Export
 {
 	$VmHostExportFile = "$CaptureCsvFolder\$vCenter-VmHostExport.csv"
-	Get-View -ViewType HostSystem -Property Name, Config.Product, Summary.Hardware, Summary, Parent, Config.Network |
-	Select-Object @{ N = "Name" ; E = { $_.Name } }, 
-	@{	N = "Datacenter" ; E = { $Datacenter = Get-View -Id $_.Parent -Property Name, Parent
-			while ($Datacenter -isnot [VMware.Vim.Datacenter] -and $Datacenter.Parent)
-			{
-				$Datacenter = Get-View -Id $Datacenter.Parent -Property Name, Parent
-			}
-			if ($Datacenter -is [VMware.Vim.Datacenter])
-			{
-			$Datacenter.Name } } }, 
-	@{ N = "Cluster" ; E = { $Cluster = Get-View -Id $_.Parent -Property Name, Parent
-			while ($Cluster -isnot [VMware.Vim.ClusterComputeResource] -and $Cluster.Parent)
-			{
-				$Cluster = Get-View -Id $Cluster.Parent -Property Name, Parent
-			}
-			if ($Cluster -is [VMware.Vim.ClusterComputeResource]) { $Cluster.Name } } },
-	@{ N = "Version" ; E = { $_.Config.Product.Version } },
-	@{ N = "Build" ; E = { $_.Config.Product.Build } },
-	@{ N = "Manufacturer" ; E = { $_.Summary.Hardware.Vendor } },
-	@{ N = "Model" ; E = { $_.Summary.Hardware.Model } },
-	@{ N = "ProcessorType" ; E = { $_.Summary.Hardware.CpuModel } },
-	@{ N = "CpuMhz" ; E = { $_.Summary.Hardware.CpuMhz } },
-	@{ N = "NumCpuPkgs" ; E = { $_.Summary.Hardware.NumCpuPkgs } },
-	@{ N = "NumCpuCores" ; E = { $_.Summary.Hardware.NumCpuCores } },
-	@{ N = "NumCpuThreads" ; E = { $_.Summary.Hardware.NumCpuThreads } },
-	@{ N = "Memory" ; E = { [math]::Round([decimal]$_.Summary.Hardware.MemorySize / 1073741824) } },
-	@{ N = "MaxEVCMode" ; E = { $_.Summary.MaxEVCModeKey } },
-	@{ N = "NumNics" ; E = { $_.Summary.Hardware.NumNics } },
-	@{ N = "IP" ; E = { [string]::Join(", ", ($_.Config.Network.Vnic.Spec.Ip.IpAddress)) } },
-	@{ N = "MacAddress" ; E = { [string]::Join(", ", ($_.Config.Network.Vnic.Spec.Mac)) } },
-	@{ N = "NumHBAs" ; E = { $_.Summary.Hardware.NumHBAs } } | Export-Csv $VmHostExportFile -Append -NoTypeInformation
+	$ServiceInstance = Get-View ServiceInstance
+	$LicenseManager = Get-View $ServiceInstance.Content.LicenseManager
+	$LicenseAssignmentManager = Get-View $LicenseManager.LicenseAssignmentManager
+	Get-View -ViewType HostSystem -Property Name, Config.Product, Summary.Hardware, Summary, Parent, Config.Network, Config.Host.Value | Sort Name |
+		Select-Object @{ N = "Name" ; E = { $_.Name } }, 
+		@{	N = "Datacenter" ; E = { $Datacenter = Get-View -Id $_.Parent -Property Name, Parent
+				while ($Datacenter -isnot [VMware.Vim.Datacenter] -and $Datacenter.Parent)
+				{
+					$Datacenter = Get-View -Id $Datacenter.Parent -Property Name, Parent
+				}
+				if ($Datacenter -is [VMware.Vim.Datacenter])
+				{
+				$Datacenter.Name } } }, 
+		@{ N = "Cluster" ; E = { $Cluster = Get-View -Id $_.Parent -Property Name, Parent
+				while ($Cluster -isnot [VMware.Vim.ClusterComputeResource] -and $Cluster.Parent)
+				{
+					$Cluster = Get-View -Id $Cluster.Parent -Property Name, Parent
+				}
+				if ($Cluster -is [VMware.Vim.ClusterComputeResource]) { $Cluster.Name } } },
+		@{ N = "Version" ; E = { $_.Config.Product.Version } },
+		@{ N = "Build" ; E = { $_.Config.Product.Build } },
+		@{ N = "Manufacturer" ; E = { $_.Summary.Hardware.Vendor } },
+		@{ N = "Model" ; E = { $_.Summary.Hardware.Model } },
+		@{ N = "LicenseType" ; E = { $LicenseAssignmentManager.QueryAssignedLicenses($_.Config.Host.Value).AssignedLicense.Name  } },
+		@{ N = "BiosVersion" ; E = { (Get-VMHost $_.Name | Get-VMHostHardware -WaitForAllData -SkipAllSslCertificateChecks -ErrorAction SilentlyContinue).BiosVersion } },
+		@{ N = "BIOSReleaseDate" ; E = { (((Get-VMHost $_.Name).ExtensionData.Hardware.BiosInfo.ReleaseDate -split " ")[0]) } },
+		@{ N = "ProcessorType" ; E = { $_.Summary.Hardware.CpuModel } },
+		@{ N = "CpuMhz" ; E = { $_.Summary.Hardware.CpuMhz } },
+		@{ N = "NumCpuPkgs" ; E = { $_.Summary.Hardware.NumCpuPkgs } },
+		@{ N = "NumCpuCores" ; E = { $_.Summary.Hardware.NumCpuCores } },
+		@{ N = "NumCpuThreads" ; E = { $_.Summary.Hardware.NumCpuThreads } },
+		@{ N = "Memory" ; E = { [math]::Round([decimal]$_.Summary.Hardware.MemorySize / 1073741824) } },
+		@{ N = "MaxEVCMode" ; E = { $_.Summary.MaxEVCModeKey } },
+		@{ N = "NumNics" ; E = { $_.Summary.Hardware.NumNics } },
+		@{ N = "ManagemetIP" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty IP } },
+		@{ N = "ManagemetMacAddress" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Mac } },
+		@{ N = "ManagemetVMKernel" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Name } },
+		@{ N = "ManagemetSubnetMask" ; E = { Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.ManagementTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask } },
+		@{ N = "vMotionIP" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty IP)) } },
+		@{ N = "vMotionMacAddress" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty Mac)) } },
+		@{ N = "vMotionVMKernel" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty Name)) } },
+		@{ N = "vMotionSubnetMask" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VMotionEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask)) } },
+		@{ N = "FtIP" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty IP)) } },
+		@{ N = "FtMacAddress" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty Mac)) } },
+		@{ N = "FtVMKernel" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty Name)) } },
+		@{ N = "FtSubnetMask" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.FaultToleranceLoggingEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask)) } },
+		@{ N = "VSANIP" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty IP)) } },
+		@{ N = "VSANMacAddress" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Mac)) } },
+		@{ N = "VSANVMKernel" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty Name)) } },
+		@{ N = "VSANSubnetMask" ; E = { [string]::Join(", ", (Get-VMHost $_.Name | Get-VMHostNetworkAdapter | Where-Object {$_.VsanTrafficEnabled -eq 'True'} | Select-Object -ExpandProperty SubnetMask)) } },
+		@{ N = "NumHBAs" ; E = { $_.Summary.Hardware.NumHBAs } },
+		@{ N = "iSCSIIP" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).IPv4) } },
+		@{ N = "iSCSIMac" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).MACAddress) } },
+		@{ N = "iSCSIVMKernel" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).Vmknic) } },
+		@{ N = "iSCSISubnetMask" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).IPv4SubnetMask) } },
+		@{ N = "iSCSIAdapter" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).Adapter) } },
+		@{ N = "iSCSILinkUp" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).LinkUp) } },
+		@{ N = "iSCSIMTU" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).MTU) } },
+		@{ N = "iSCSINICDriver" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).NICDriver) } },
+		@{ N = "iSCSINICDriverVersion" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).NICDriverVersion) } },
+		@{ N = "iSCSINICFirmwareVersion" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).NICFirmwareVersion) } },
+		@{ N = "iSCSIPathStatus" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).PathStatus) } },
+		@{ N = "iSCSIVlanID" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).VlanID) } },
+		@{ N = "iSCSIVswitch" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).Vswitch) } },
+		@{ N = "iSCSICompliantStatus" ; E = { [string]::Join(", ", ((Get-EsxCli -VMHost $_.Name).iscsi.networkportal.list()).CompliantStatus) } },
+		@{ N = "IScsiName" ; E = { (Get-VMHost $_.Name | Get-VMHostHBA -Type IScsi).IScsiName } } | Export-Csv $VmHostExportFile -Append -NoTypeInformation
 }
 #endregion
 #region ~~< Vm_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -248,6 +287,9 @@ function Vm_Export
 		@{ N = "NumVirtualDisks" ; E = { $_.Summary.Config.NumVirtualDisks } },
 		@{ N = "CpuReservation" ; E = { $_.Summary.Config.CpuReservation } },
 		@{ N = "MemoryReservation" ; E = { $_.Summary.Config.MemoryReservation } },
+		@{ N = "CpuHotAddEnabled" ; E = { $_.Config.CpuHotAddEnabled } },
+		@{ N = "CpuHotRemoveEnabled" ; E = { $_.Config.CpuHotRemoveEnabled } },
+		@{ N = "MemoryHotAddEnabled" ; E = { $_.Config.MemoryHotAddEnabled } },
 		@{ N = "SRM" ; E = { $_.Summary.Config.ManagedBy.Type } },
 		@{ N = "Snapshot" ; E = { $_.Snapshot } },
 		@{ N = "RootSnapshot" ; E = { $_.RootSnapshot } }| Export-Csv $VmExportFile -Append -NoTypeInformation
@@ -280,7 +322,10 @@ function Template_Export
 		@{ N = "NumEthernetCards" ; E = { $_.ExtensionData.Summary.Config.NumEthernetCards } },
 		@{ N = "NumVirtualDisks" ; E = { $_.ExtensionData.Summary.Config.NumVirtualDisks } },
 		@{ N = "CpuReservation" ; E = { $_.ExtensionData.Summary.Config.CpuReservation } },
-		@{ N = "MemoryReservation" ; E = { $_.ExtensionData.Summary.Config.MemoryReservation } } | Export-Csv $TemplateExportFile -Append -NoTypeInformation
+		@{ N = "MemoryReservation" ; E = { $_.ExtensionData.Summary.Config.MemoryReservation } },
+		@{ N = "CpuHotAddEnabled" ; E = { $_.ExtensionData.Config.CpuHotAddEnabled } },
+		@{ N = "CpuHotRemoveEnabled" ; E = { $_.ExtensionData.Config.CpuHotRemoveEnabled } },
+		@{ N = "MemoryHotAddEnabled" ; E = { $_.ExtensionData.Config.MemoryHotAddEnabled } } | Export-Csv $TemplateExportFile -Append -NoTypeInformation
 	}
 }
 #endregion
