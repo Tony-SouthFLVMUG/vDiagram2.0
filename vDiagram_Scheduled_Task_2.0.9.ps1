@@ -10,7 +10,7 @@
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.8
+   Version		: 2.0.9
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -20,6 +20,10 @@
 		Active connection to vCenter to capture data
 
 .CHANGE LOG
+	- 09/25/2019 - v2.0.9
+		Moved from Get-<Item> to Get-View.
+		Added Pop-up bubbles to all items in GUI to provide direction.
+
 	- 07/17/2019 - v2.0.8
 		Typo found out capture output. Added CpuHotRemoveEnabled, CpuHotAddEnabled & MemoryHotAddEnabled to VM & Template outputs.
 		Added additional properties to VMHost object.

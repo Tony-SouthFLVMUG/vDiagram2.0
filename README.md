@@ -20,11 +20,11 @@ Powershell script that will capture and draw in Visio a VMware Infrastructure.
 	5. Follow directions listed below in "Usage Notes".
 
 ## NOTES
-	File Name	: vDiagram_2.0.8.ps1
+	File Name	: vDiagram_2.0.9.ps1
 	Author		: Tony Gonzalez
 	Author		: Jason Hopkins
 	Based on	: vDiagram by Alan Renouf
-	Version		: 2.0.8
+	Version		: 2.0.9
 
 ## USAGE NOTES
 	Directions:
@@ -60,6 +60,9 @@ Powershell script that will capture and draw in Visio a VMware Infrastructure.
 	6. Click on "Open Visio Drawing" button once "Draw Visio" button says it has completed.
 
 ## CHANGE LOG
+	- 09/25/2019 - v2.0.9
+		Moved from Get-<Item> to Get-View.
+		Added Pop-up bubbles to all items in GUI to provide direction.
 
 	- 07/12/2019 - v2.0.8
 		Typo found out capture output.
