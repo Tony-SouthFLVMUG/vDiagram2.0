@@ -20,11 +20,11 @@ Powershell script that will capture and draw in Visio a VMware Infrastructure.
 	5. Follow directions listed below in "Usage Notes".
 
 ## NOTES
-	File Name	: vDiagram_2.0.9.ps1
+	File Name	: vDiagram_2.0.10.ps1
 	Author		: Tony Gonzalez
 	Author		: Jason Hopkins
 	Based on	: vDiagram by Alan Renouf
-	Version		: 2.0.9
+	Version		: 2.0.10
 
 ## USAGE NOTES
 	Directions:
@@ -60,6 +60,22 @@ Powershell script that will capture and draw in Visio a VMware Infrastructure.
 	6. Click on "Open Visio Drawing" button once "Draw Visio" button says it has completed.
 
 ## CHANGE LOG
+	- 04/09/2020 - v2.0.10
+		Added PowerCLI module version check.
+		Added PowerCLI module install if missing.
+		Added PowerCLI module upgrade to latest if desired.
+		Added device count to capture progression.
+		Added device count to draw progression.
+		Added additional attributes to shapes.
+		Added folder hierarchy to Visio drawing.
+		Added DRS Rules hierarchy to Visio drawing.
+		Added Resource Pool hierachy to Visio drawing.
+		Script now auto hides errors.
+		-debug was added to parameters to allow for troubleshooting. To use open Powershell browse to script directory and enter script name -debug ( Example: c:\scripts\vDiagram_2.0.10.ps1 -debug )
+		-logcapture was added to parameters to allow for troubleshooting. To use open Powershell browse to script directory and enter script name -debug ( Example: c:\scripts\vDiagram_2.0.10.ps1 -logcapture ). Log capture will be placed in the same directory where script was ran from.
+		-logdraw was added to parameters to allow for troubleshooting. To use open Powershell browse to script directory and enter script name -debug ( Example: c:\scripts\vDiagram_2.0.10.ps1 -logdraw ). Log draw will be placed in the same directory where script was ran from.
+		All 3 parameters can be used at the same time. To use open Powershell browse to script directory and enter script name -debug ( Example: c:\scripts\vDiagram_2.0.10.ps1 -debug -logcapture -logdraw )
+	
 	- 09/25/2019 - v2.0.9
 		Moved from Get-<Item> to Get-View.
 		Added Pop-up bubbles to all items in GUI to provide direction.
