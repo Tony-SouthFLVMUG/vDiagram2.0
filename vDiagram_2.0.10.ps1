@@ -3113,7 +3113,7 @@ $ConnectButton.Add_MouseClick( { $Connected = Get-View $DefaultViserver.Extensio
 		if ( $logcapture -eq $true ) `
 		{ `
 			$FileDateTime = (Get-Date -format "yyyy_MM_dd-HH_mm")
-			$LogCapturePath = $FileDateTime + " " + $ConnServ + " - vDiagram_Capture.log"
+			$LogCapturePath = $FileDateTime + " " + $DefaultViserver + " - vDiagram_Capture.log"
 			Start-Transcript -Path "$LogCapturePath"
 			$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
 			Write-Host "[$DateTime] Powershell Module version installed:" $PSVersionTable.PSVersion -ForegroundColor Green
@@ -3133,7 +3133,7 @@ $ConnectButton.Add_MouseClick( { $Connected = Get-View $DefaultViserver.Extensio
 		if ( $logcapture -eq $true ) `
 		{ `
 			$FileDateTime = (Get-Date -format "yyyy_MM_dd-HH_mm")
-			$LogCapturePath = $FileDateTime + " " + $ConnServ + " - vDiagram_Capture.log"
+			$LogCapturePath = $FileDateTime + " " + $DefaultViserver + " - vDiagram_Capture.log"
 			Start-Transcript -Path "$LogCapturePath"
 			$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
 			Write-Host "[$DateTime] Powershell Module version installed:" $PSVersionTable.PSVersion -ForegroundColor Green
