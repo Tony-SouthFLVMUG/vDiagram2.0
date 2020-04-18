@@ -111,7 +111,7 @@ function Find_PowerCliModule
 {
 	$PowerCliCheck =  [System.Windows.Forms.MessageBox]::Show( "PowerCLI Module was not found. Would you like to install? Click 'Yes' to install and 'No' cancel.","Warning! Powershell Module is missing.",[System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Warning )
 		switch  ( $PowerCliCheck ) `
-		{ ` 
+		{ `
 			'Yes' 
 			{ `
 				Write-Host "[$DateTime] Installing Module" $VMwareModule.Name -ForegroundColor Green
@@ -141,7 +141,7 @@ if ( ( $PowerCli.Name ) -match ( "VMware.PowerCLI" ) ) `
 	{ `
 		$PowerCliUpgrade =  [System.Windows.Forms.MessageBox]::Show( "PowerCLI Module is not the latest. Would you like to upgrade? Click 'Yes' to upgrade and 'No' cancel.","Warning! PowerCLI Module is not the latest.",[System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Information )
 			switch  ( $PowerCliUpgrade ) `
-			{ ` 
+			{ `
 				'Yes' 
 				{ `
 					$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
@@ -208,14 +208,14 @@ $About =
 #endregion ~~< About >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #region ~~< TestShapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if ( ( Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) -or (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) -ne $null ) `
+if ( ( Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) -or $null -ne (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) ) `
 { `
 	$TestShapes = [System.Environment]::GetFolderPath('MyDocuments') + "\My Shapes\vDiagram_" + $MyVer + ".vssx"
 	if (!(Test-Path $TestShapes))
 	{
 		$CurrentLocation = Get-Location
 		$UpdatedShapes = "$CurrentLocation" + "\vDiagram_" + "$MyVer" + ".vssx"
-		copy $UpdatedShapes $TestShapes
+		Copy-Item $UpdatedShapes $TestShapes
 		Write-Host "Copying Shapes File to My Shapes"
 	}
 	$shpFile = "\vDiagram_" + $MyVer + ".vssx"
@@ -244,10 +244,10 @@ param(
     }
     Write-Verbose ("Set Window Style {1} on handle {0}" -f $MainWindowHandle, $($WindowStates[$style]))
 
-    $Win32ShowWindowAsync = Add-Type –memberDefinition @” 
+    $Win32ShowWindowAsync = Add-Type -memberDefinition @"
     [DllImport("user32.dll")] 
     public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
-“@ -name “Win32ShowWindowAsync” -namespace Win32Functions –passThru
+"@ -name "Win32ShowWindowAsync" -namespace Win32Functions -passThru
 
     $Win32ShowWindowAsync::ShowWindowAsync($MainWindowHandle, $WindowStates[$Style]) | Out-Null
 }
@@ -3051,7 +3051,7 @@ else `
 
 #region ~~< PowerCliModuleCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $PowerCliModuleCheck = ( Get-Module VMware.PowerCLI -ListAvailable | Where-Object { $_.Name -eq "VMware.PowerCLI" } | Sort-Object Version -Descending )
-if ( $PowerCliModuleCheck -ne $null ) `
+if ( $null -ne $PowerCliModuleCheck ) `
 { `
 	$PowerCliModuleVersion = ( $PowerCliModuleCheck.Version[0] )
 	$PowerCliModuleInstalled.Forecolor = "Green"
@@ -3065,12 +3065,12 @@ else `
 #endregion ~~< PowerCliModuleCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #region ~~< PowerCliCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if ( ( Get-PSSnapin -registered | Where-Object { $_.Name -eq "VMware.VimAutomation.Core" } ) -ne $null ) `
+if ( $null -ne ( Get-PSSnapin -registered | Where-Object { $_.Name -eq "VMware.VimAutomation.Core" } ) ) `
 { `
 	$PowerCliInstalled.Forecolor = "Green"
 	$PowerCliInstalled.Text = "PowerClI Installed"
 }
-elseif ( $PowerCliModuleCheck -ne $null ) `
+elseif ( $null -ne $PowerCliModuleCheck ) `
 { `
 	$PowerCliInstalled.Forecolor = "Green"
 	$PowerCliInstalled.Text = "PowerCLI Module Installed"
@@ -3083,7 +3083,7 @@ else `
 #endregion ~~< PowerCliCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #region ~~< VisioCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if ( ( Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) -or (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) -ne $null ) `
+if ( ( Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) -or $null -ne (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) ) `
 { `
 	$VisioInstalled.Forecolor = "Green"
 	$VisioInstalled.Text = "Installed"
@@ -4744,7 +4744,7 @@ $DrawButton.Add_Click({ `
 		{ `
 			'Yes' 
 			{ `
-				start 'https://twitter.com/vDiagramProject'
+				Start-Process 'https://twitter.com/vDiagramProject'
 				[System.Windows.Forms.MessageBox]::Show("Your Visio Drawing is now complete. Please validate all drawings to ensure items are not missing.
 
 Please click on the Open Visio Drawing button now to open and compress the file.","vDiagram is now complete!",[System.Windows.Forms.MessageBoxButtons]::OK,[System.Windows.Forms.MessageBoxIcon]::Information)
@@ -4893,7 +4893,6 @@ function Disconnect_vCenter
 #region ~~< Find_CaptureCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Find_CaptureCsvFolder
 {
-	$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
 	$CaptureCsvBrowseLoop = $True
 	while ($CaptureCsvBrowseLoop) `
 	{ `
@@ -4925,10 +4924,10 @@ function Check_CaptureCsvFolder
 	{
 		$CheckContents_CaptureCsvFolder =  [System.Windows.Forms.MessageBox]::Show( "Files where found in the folder. Would you like to delete these files? Click 'Yes' to delete and 'No' move files to a new folder.","Warning!",[System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Question )
 		switch  ($CheckContents_CaptureCsvFolder) `
-		{ ` 
+		{ `
 			'Yes' 
 			{ `
-				del $CheckContentDir
+				Remove-Item $CheckContentDir
 				if ( $debug -eq $true )`
 				{ `
 					Write-Host "[$DateTime] Files were present in folder. Deleting files from folder."
@@ -4942,7 +4941,7 @@ function Check_CaptureCsvFolder
 				$CheckContentCsvBrowse.ShowDialog()
 				$global:NewContentCsvFolder = $CheckContentCsvBrowse.SelectedPath
 				copy-item -Path $CheckContentDir -Destination $NewContentCsvFolder
-				del $CheckContentDir
+				Remove-Item $CheckContentDir
 				if ( $debug -eq $true )`
 				{ `
 					Write-Host "[$DateTime] Files were present in folder. Moving old files to $NewContentCsvFolder"
@@ -4956,7 +4955,6 @@ function Check_CaptureCsvFolder
 #region ~~< Find_DrawCsvFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Find_DrawCsvFolder
 {
-	$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
 	$DrawCsvBrowseLoop = $True
 	while ($DrawCsvBrowseLoop) `
 	{ `
@@ -4980,7 +4978,6 @@ function Find_DrawCsvFolder
 #region ~~< Find_DrawVisioFolder >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Find_DrawVisioFolder
 {
-	$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
 	$VisioBrowseLoop = $True
 	while($VisioBrowseLoop) `
 	{ `
@@ -5318,7 +5315,7 @@ function VmHost_Export
 							ForEach ( $PnicInfo in $PnicsInfo ) `
 							{ `
 								( $PnicInfo.ConnectedSwitchPort | `
-								Select `
+								Select-Object `
 									@{ Name = "VMNic" ; Expression = { $PhysicalNic.Device } }, `
 									@{ Name = "DevId" ; Expression = { $_.DevId } }, `
 									@{ Name = "PortId" ; Expression = { $_.PortId } }, `
@@ -5369,16 +5366,16 @@ function Vm_Export
 			@{ Name = "ClusterId" ; Expression = { ( Get-Cluster -VM ( Get-VM -Id $_.MoRef ) ).Id } }, `
 			@{ Name = "VmHost" ; Expression = { Get-VmHost -Id ( $_.Runtime.Host ) } }, `
 			@{ Name = "VmHostId" ; Expression = { ( Get-VmHost -Id ( $_.Runtime.Host ) ).Id } }, `
-			@{ Name = "DatastoreCluster" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort Name ) ) } }, `
-			@{ Name = "DatastoreClusterId" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort Name ).Id ) } }, `
-			@{ Name = "Datastore" ; Expression = { [string]::Join( ", ", ( $_.Config.DatastoreUrl.Name | Sort Name ) ) } }, `
-			@{ Name = "DatastoreId" ; Expression = { [string]::Join( ", ", ( Get-Datastore ( $_.Config.DatastoreUrl.Name | Sort Name ) ).Id ) } }, `
-			@{ Name = "ResourcePool" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort Name ) ) } }, `
-			@{ Name = "ResourcePoolId" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort Name ).Id ) } }, `
-			@{ Name = "vSwitch" ; Expression = { [string]::Join( ", ", ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort Name ) ) } }, `
-			@{ Name = "vSwitchId" ; Expression = { [string]::Join( ", ", ( ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort Name ).Id ) ) } }, `
-			@{ Name = "PortGroup" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort Name ) ) } }, `
-			@{ Name = "PortGroupId" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort Name | `
+			@{ Name = "DatastoreCluster" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ) ) } }, `
+			@{ Name = "DatastoreClusterId" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ).Id ) } }, `
+			@{ Name = "Datastore" ; Expression = { [string]::Join( ", ", ( $_.Config.DatastoreUrl.Name | Sort-Object Name ) ) } }, `
+			@{ Name = "DatastoreId" ; Expression = { [string]::Join( ", ", ( Get-Datastore ( $_.Config.DatastoreUrl.Name | Sort-Object Name ) ).Id ) } }, `
+			@{ Name = "ResourcePool" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort-Object Name ) ) } }, `
+			@{ Name = "ResourcePoolId" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort-Object Name ).Id ) } }, `
+			@{ Name = "vSwitch" ; Expression = { [string]::Join( ", ", ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ) ) } }, `
+			@{ Name = "vSwitchId" ; Expression = { [string]::Join( ", ", ( ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ).Id ) ) } }, `
+			@{ Name = "PortGroup" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ) ) } }, `
+			@{ Name = "PortGroupId" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name | `
 				ForEach-Object `
 				{ `
 					if ($( $_.key -like "key-vim.host.PortGroup*" ) )
@@ -5405,7 +5402,7 @@ function Vm_Export
 			@{ Name = "IP" ; Expression = { [string]::Join(", ", ( $_.Guest.IpAddress ) ) } }, `
 			@{ Name = "MacAddress" ; Expression = { [string]::Join(", ", ( $_.Guest.Net.MacAddress ) ) } }, `
 			@{ Name = "NumVirtualDisks" ; Expression = { [string]::Join( ", ", ( $_.Summary.Config.NumVirtualDisks ) ) } }, `
-			@{ Name = "VmdkInfo" ; Expression = { [string]::Join(", ", ( Get-HardDisk -Vm $_.Name | Sort Name | `
+			@{ Name = "VmdkInfo" ; Expression = { [string]::Join(", ", ( Get-HardDisk -Vm $_.Name | Sort-Object Name | `
 				ForEach-Object `
 				{ `
 					if ($($_.DiskType -like "Raw*"))
@@ -5418,7 +5415,7 @@ function Vm_Export
 					}
 				} ) ) `
 			} }, `
-			@{ Name = "Volumes" ; Expression = { [string]::Join(", ", ( $_.Guest.Disk | Sort DiskPath | `
+			@{ Name = "Volumes" ; Expression = { [string]::Join(", ", ( $_.Guest.Disk | Sort-Object DiskPath | `
 				ForEach-Object `
 				{ `
 					"$( $_.DiskPath ) - $( [math]::Ceiling( $_.Capacity/1GB ) )GB Total - $( [math]::Ceiling( $_.FreeSpace/1GB ) )GB Free" `
@@ -5662,10 +5659,10 @@ function VsSwitch_Export
 			@{ Name = "SpecPolicySecurityForgedTransmits" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.Security.ForgedTransmits ) ) } }, `
 			@{ Name = "SpecPolicyNicTeamingPolicy" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.Policy ) ) } }, `
 			@{ Name = "SpecPolicyNicTeamingReversePolicy" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.ReversePolicy ) ) } }, `
-			@{ Name = "SpecPolicyNicTeamingNotifySwitches" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.NotifySwitches ) ) } }, ` 
+			@{ Name = "SpecPolicyNicTeamingNotifySwitches" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.NotifySwitches ) ) } }, `
 			@{ Name = "SpecPolicyNicTeamingRollingOrder" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.RollingOrder ) ) } }, `
 			@{ Name = "SpecPolicyNicTeamingNicOrderActiveNic" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.ActiveNic ) ) } }, `
-			@{ Name = "SpecPolicyNicTeamingNicOrderStandbyNic" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.StandbyNic ) ) } }, ` 
+			@{ Name = "SpecPolicyNicTeamingNicOrderStandbyNic" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Spec.Policy.NicTeaming.NicOrder.StandbyNic ) ) } }, `
 			@{ Name = "NumPorts" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.NumPorts ) ) } }, `
 			@{ Name = "NumPortsAvailable" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.NumPortsAvailable ) ) } }, `
 			@{ Name = "Mtu" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.Mtu ) ) } }, `
@@ -5732,7 +5729,7 @@ function VssPort_Export
 					@{ Name = "Security_ForgedTransmits" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.Security.ForgedTransmits ) ) } }, `
 					@{ Name = "NicTeaming_Policy" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.Policy ) ) } }, `
 					@{ Name = "NicTeaming_ReversePolicy" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.ReversePolicy ) ) } }, `
-					@{ Name = "NicTeaming_NotifySwitches" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.NotifySwitches ) ) } }, ` 
+					@{ Name = "NicTeaming_NotifySwitches" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.NotifySwitches ) ) } }, `
 					@{ Name = "NicTeaming_RollingOrder" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.RollingOrder ) ) } }, `
 					@{ Name = "NicTeaming_FailureCriteria_CheckSpeed" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.FailureCriteria.CheckSpeed ) ) } }, `
 					@{ Name = "NicTeaming_FailureCriteria_Speed" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.FailureCriteria.Speed ) ) } }, `
@@ -5742,7 +5739,7 @@ function VssPort_Export
 					@{ Name = "NicTeaming_FailureCriteria_Percentage" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.FailureCriteria.Percentage ) ) } }, `
 					@{ Name = "NicTeaming_FailureCriteria_CheckBeacon" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.FailureCriteria.CheckBeacon ) ) } }, `
 					@{ Name = "NicTeaming_NicOrder_ActiveNic" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.NicOrder.ActiveNic ) ) } }, `
-					@{ Name = "NicTeaming_NicOrder_StandbyNic" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.NicOrder.StandbyNic ) ) } }, ` 
+					@{ Name = "NicTeaming_NicOrder_StandbyNic" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.NicTeaming.NicOrder.StandbyNic ) ) } }, `
 					@{ Name = "OffloadPolicy_CsumOffload" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.OffloadPolicy.CsumOffload ) ) } }, `
 					@{ Name = "OffloadPolicy_TcpSegmentation" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.OffloadPolicy.TcpSegmentation ) ) } }, `
 					@{ Name = "OffloadPolicy_ZeroCopyXmit" ; Expression = { [string]::Join(", ", ( $_.ExtensionData.ComputedPolicy.OffloadPolicy.ZeroCopyXmit ) ) } }, `
@@ -5804,13 +5801,13 @@ function VssVmk_Export
 						@{ Name = "VSwitchId" ; Expression = { $VsSwitch.Id } }, `
 						@{ Name = "PortGroupName" ; Expression = { $_.PortGroupName } }, `
 						@{ Name = "PortGroupId" ; Expression = { $_.Id } }, `
-						@{ Name = "VMotionEnabled" ; Expression = { $_.VMotionEnabled } }, ` 
+						@{ Name = "VMotionEnabled" ; Expression = { $_.VMotionEnabled } }, `
 						@{ Name = "FaultToleranceLoggingEnabled" ; Expression = { $_.FaultToleranceLoggingEnabled } }, `
 						@{ Name = "ManagementTrafficEnabled" ; Expression = { $_.ManagementTrafficEnabled } }, `
 						@{ Name = "IP" ; Expression = { $_.IP } }, `
-						@{ Name = "Mac" ; Expression = { $_.Mac } }, ` 
+						@{ Name = "Mac" ; Expression = { $_.Mac } }, `
 						@{ Name = "SubnetMask" ; Expression = { $_.SubnetMask } }, `
-						@{ Name = "DhcpEnabled" ; Expression = { $_.DhcpEnabled } }, ` 
+						@{ Name = "DhcpEnabled" ; Expression = { $_.DhcpEnabled } }, `
 						@{ Name = "IPv6" ; Expression = { $_.IPv6 } }, `
 						@{ Name = "AutomaticIPv6" ; Expression = { $_.AutomaticIPv6 } }, `
 						@{ Name = "IPv6ThroughDhcp" ; Expression = { $_.IPv6ThroughDhcp } }, `
@@ -5933,7 +5930,7 @@ function VdSwitch_Export
 		$VdSwitchCsvValidationComplete.Text = "$i of $( ( Get-View -ViewType DistributedVirtualSwitch ).Count )"
 		$TabCapture.Controls.Add($VdSwitchCsvValidationComplete)
 
-		$DistributedVirtualSwitch | `		
+		$DistributedVirtualSwitch | `
 		Select-Object `
 			@{ Name = "Name" ; Expression = { $_.Name } }, `
 			@{ Name = "Datacenter" ; Expression = { Get-Datacenter -VMHost ( Get-VmHost -Id ( $_.Summary.HostMember ) ) } }, `
@@ -5949,7 +5946,7 @@ function VdSwitch_Export
 			@{ Name = "NumHosts" ; Expression = { $_.Summary.NumHosts } }, `
 			@{ Name = "NumPorts" ; Expression = { $_.Summary.NumPorts } }, `
 			@{ Name = "Vendor" ; Expression = { $_.Summary.ProductInfo.Vendor } }, `
-			@{ Name = "Version" ; Expression = { $_.Summary.ProductInfo.Version } }, ` 
+			@{ Name = "Version" ; Expression = { $_.Summary.ProductInfo.Version } }, `
 			@{ Name = "ConfigVspanSession" ; Expression = { [string]::Join(", ", ( $_.Config.VspanSession ) ) } }, `
 			@{ Name = "ConfigPvlanConfig" ; Expression = { [string]::Join(", ", ( $_.Config.PvlanConfig ) ) } }, `
 			@{ Name = "ConfigMaxMtu" ; Expression = { [string]::Join(", ", ( $_.Config.MaxMtu ) ) } }, `
@@ -6066,7 +6063,7 @@ function VdSwitch_Export
 					"Value = $( $_.Value ) / Inherited = $( $_.Inherited )" `
 				} ) ) `
 			} }, `
-			@{ Name = "ConfigDefaultPortConfigSecurityPolicyForgedTransmits" ; Expression = { [string]::Join(", ", ( $_.Config.DefaultPortConfig.SecurityPolicy.ForgedTransmits | ` 
+			@{ Name = "ConfigDefaultPortConfigSecurityPolicyForgedTransmits" ; Expression = { [string]::Join(", ", ( $_.Config.DefaultPortConfig.SecurityPolicy.ForgedTransmits | `
 				ForEach-Object `
 				{ `
 					"Value = $( $_.Value ) / Inherited = $( $_.Inherited )" `
@@ -6277,7 +6274,7 @@ function VdsPort_Export
 			@{ Name = "VlanConfiguration" ; Expression = { "VLAN "+ $_.Config.DefaultPortConfig.Vlan.VlanId } }, `
 			@{ Name = "NumPorts" ; Expression = { $_.Config.NumPorts } }, `
 			@{ Name = "ActiveUplinkPort" ; Expression = { [string]::Join(", ", ( $_.Config.DefaultPortConfig.UplinkTeamingPolicy.UplinkPortOrder.ActiveUplinkPort)) } }, `
-			@{ Name = "StandbyUplinkPort" ; Expression = { [string]::Join(", ", ( $_.Config.DefaultPortConfig.UplinkTeamingPolicy.UplinkPortOrder.StandbyUplinkPort)) } }, ` 
+			@{ Name = "StandbyUplinkPort" ; Expression = { [string]::Join(", ", ( $_.Config.DefaultPortConfig.UplinkTeamingPolicy.UplinkPortOrder.StandbyUplinkPort)) } }, `
 			@{ Name = "Policy" ; Expression = { $_.Config.DefaultPortConfig.UplinkTeamingPolicy.Policy.Value } }, `
 			@{ Name = "ReversePolicy" ; Expression = { $_.Config.DefaultPortConfig.UplinkTeamingPolicy.ReversePolicy.Value } }, `
 			@{ Name = "NotifySwitches" ; Expression = { $_.Config.DefaultPortConfig.UplinkTeamingPolicy.NotifySwitches.Value } }, `
@@ -6465,7 +6462,7 @@ function Folder_Export
 					if ( $_.ChildEntity -like "Datacenter*" ) `
 					{ `
 						[string]::Join( ", ", ( Get-Datacenter -Id $_.ChildEntity | Sort-Object ) ) `
-					} ` 
+					} `
 					elseif ( $_.ChildEntity -like "ClusterComputeResource*" ) `
 					{ `
 						[string]::Join( ", ", ( Get-Cluster -Id $_.ChildEntity | Sort-Object ) ) `
@@ -6741,7 +6738,7 @@ function Drs_Rule_Export
 				@{ Name = "Cluster" ; Expression = { $_.Cluster } }, `
 				@{ Name = "ClusterId" ; Expression = { ( $_.Cluster ).Id } }, `
 				@{ Name = "Vm" ; Expression = { [string]::Join(", ", ( Get-VM -Id $_.VMIDs | Sort-Object Name ) ) } }, `
-				@{ Name = "VmId" ; Expression = { [string]::Join(", ", ( $_.VMIDs | Sort Name ) ) } }, `
+				@{ Name = "VmId" ; Expression = { [string]::Join(", ", ( $_.VMIDs | Sort-Object Name ) ) } }, `
 				@{ Name = "Type" ; Expression = { $_.Type } }, `
 				@{ Name = "Enabled" ; Expression = { $_.Enabled } }, `
 				@{ Name = "Mandatory" ; Expression = { $_.Mandatory } } | `
@@ -6792,7 +6789,7 @@ function Drs_Cluster_Group_Export
 					if ( $_.GroupType -like "VMHostGroup*" ) `
 					{ `
 						[string]::Join( ", ", ( Get-DrsVMHostRule -VMHostGroup $_.Name | Sort-Object ) ) `
-					} ` 
+					} `
 					elseif ( $_.GroupType -like "VMGroup*" ) `
 					{ `
 						[string]::Join( ", ", ( Get-DrsVMHostRule -VMGroup $_.Name | Sort-Object ) ) `
@@ -6844,7 +6841,7 @@ function Drs_VmHost_Rule_Export
 				@{ Name = "Cluster" ; Expression = { $_.Cluster } }, `
 				@{ Name = "ClusterId" ; Expression = { ( $_.Cluster ).Id } }, `
 				@{ Name = "Enabled" ; Expression = { $_.Enabled } }, `
-				@{ Name = "Type" ; Expression = { $_.Type } }, `	
+				@{ Name = "Type" ; Expression = { $_.Type } }, `
 				@{ Name = "VMGroup" ; Expression = { $_.VMGroup } }, `
 				@{ Name = "VMGroupMember" ; Expression = { [string]::Join(", ", ( $_.VMGroup.Member | Sort-Object Name ) ) } }, `
 				@{ Name = "VMGroupMemberId" ; Expression = { [string]::Join(", ", ( $_.VMGroup.Member | Sort-Object Name ).Id ) } }, `
@@ -8431,8 +8428,8 @@ function vCenter_to_LinkedvCenter
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "vCenter to Linked vCenters"
-	$Page = $DocsObj.Pages('vCenter to Linked vCenters')
+	$AppVisio.ActivePage.Name = "vCenter to Linked vCenters"
+	$DocsObj.Pages('vCenter to Linked vCenters')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('vCenter to Linked vCenters')
 	$AppVisio.ScreenUpdating = $False
@@ -8448,7 +8445,7 @@ function vCenter_to_LinkedvCenter
 
 	# Draw Objects
 	$x = 0
-	$y = 1.50
+	#$y = 1.50
 		
 	$VCObject = Add-VisioObjectVC $VCObj $vCenterImport
 	Draw_vCenter
@@ -8512,8 +8509,8 @@ function VM_to_Host
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VM to Host"
-	$Page = $DocsObj.Pages('VM to Host')
+	$AppVisio.ActivePage.Name = "VM to Host"
+	$DocsObj.Pages('VM to Host')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VM to Host')
 	$AppVisio.ScreenUpdating = $False
@@ -8817,8 +8814,8 @@ function VM_to_Folder
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VM to Folder"
-	$Page = $DocsObj.Pages('VM to Folder')
+	$AppVisio.ActivePage.Name = "VM to Folder"
+	$DocsObj.Pages('VM to Folder')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VM to Folder')
 	$AppVisio.ScreenUpdating = $False
@@ -9386,8 +9383,8 @@ function VMs_with_RDMs
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VM w/ RDMs"
-	$Page = $DocsObj.Pages('VM w/ RDMs')
+	$AppVisio.ActivePage.Name = "VM w/ RDMs"
+	$DocsObj.Pages('VM w/ RDMs')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VM w/ RDMs')
 	$AppVisio.ScreenUpdating = $False
@@ -9401,7 +9398,7 @@ function VMs_with_RDMs
 	$ClusterNumber = 0
 	$ClusterTotal = $ClusterImport.Name.Count	
 	$VMNumber = 0
-	$VMTotal = ( ( $RdmImport ).VmId | Select -Unique ).Count
+	$VMTotal = ( ( $RdmImport ).VmId | Select-Object -Unique ).Count
 	$RDMNumber = 0
 	$RDMTotal = ( ( $RdmImport ).ScsiCanonicalName ).Count
 	$ObjectNumber = 0
@@ -9650,8 +9647,8 @@ function SRM_Protected_VMs
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "SRM VM"
-	$Page = $DocsObj.Pages('SRM VM')
+	$AppVisio.ActivePage.Name = "SRM VM"
+	$DocsObj.Pages('SRM VM')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('SRM VM')
 	$AppVisio.ScreenUpdating = $False
@@ -9840,8 +9837,8 @@ function VM_to_Datastore
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VM to Datastore"
-	$Page = $DocsObj.Pages('VM to Datastore')
+	$AppVisio.ActivePage.Name = "VM to Datastore"
+	$DocsObj.Pages('VM to Datastore')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VM to Datastore')
 	$AppVisio.ScreenUpdating = $False
@@ -10381,8 +10378,8 @@ function VM_to_ResourcePool
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VM to Resource Pool"
-	$Page = $DocsObj.Pages('VM to Resource Pool')
+	$AppVisio.ActivePage.Name = "VM to Resource Pool"
+	$DocsObj.Pages('VM to Resource Pool')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VM to Resource Pool')
 	$AppVisio.ScreenUpdating = $False
@@ -10523,7 +10520,7 @@ function VM_to_ResourcePool
 										Write-Host "[$DateTime] Drawing Resource Pool " $ResourcePoolNumber " of " $ResourcePoolTotal " - " $SubSubResourcePool.Name
 									}
 									Connect-VisioObject $SubResourcePoolObject $SubSubResourcePoolObject
-									$SubSubResourcePoolMoRef = $SubSubResourcePool.MoRef
+									#$SubSubResourcePoolMoRef = $SubSubResourcePool.MoRef
 									$y += 1.50
 								
 									ForEach ( $VM in ( $VmImport | Where-Object { $SubSubResourcePool.VmId.contains( $_.MoRef ) -and $SubSubResourcePool.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
@@ -10742,8 +10739,8 @@ function Datastore_to_Host
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "Datastore to Host"
-	$Page = $DocsObj.Pages('Datastore to Host')
+	$AppVisio.ActivePage.Name = "Datastore to Host"
+	$DocsObj.Pages('Datastore to Host')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('Datastore to Host')
 	$AppVisio.ScreenUpdating = $False
@@ -10930,8 +10927,8 @@ function Snapshot_to_VM
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "Snapshot to VM"
-	$Page = $DocsObj.Pages('Snapshot to VM')
+	$AppVisio.ActivePage.Name = "Snapshot to VM"
+	$DocsObj.Pages('Snapshot to VM')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('Snapshot to VM')
 	$AppVisio.ScreenUpdating = $False
@@ -10943,7 +10940,7 @@ function Snapshot_to_VM
 	$DatacenterNumber = 0
 	$DatacenterTotal = $DatacenterImport.Name.Count
 	$VMNumber = 0
-	$VMTotal = ( $SnapshotImport.VMId | Select -Unique ).Count
+	$VMTotal = ( $SnapshotImport.VMId | Select-Object -Unique ).Count
 	$SnapshotNumber = 0
 	$SnapshotTotal = ( $SnapshotImport ).Count
 	$ObjectNumber = 0
@@ -11231,8 +11228,8 @@ function PhysicalNIC_to_vSwitch
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "PNIC to switch"
-	$Page = $DocsObj.Pages('PNIC to Switch')
+	$AppVisio.ActivePage.Name = "PNIC to switch"
+	$DocsObj.Pages('PNIC to Switch')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('PNIC to Switch')
 		
@@ -11351,7 +11348,7 @@ function PhysicalNIC_to_vSwitch
 					Connect-VisioObject $HostObject $VsSwitchObject
 					$y += 1.50
 					
-					if ( $VssPnicImport -ne $null ) `
+					if ( $null -ne $VssPnicImport ) `
 					{ `
 						ForEach ( $VssPnic in ( $VssPnicImport | Where-Object { $VsSwitch.NicId.contains( $_.MoRef ) -and $VsSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 						{ `
@@ -11457,7 +11454,7 @@ function PhysicalNIC_to_vSwitch
 				Connect-VisioObject $HostObject $VsSwitchObject
 				$y += 1.50
 				
-				if ( $VssPnicImport -ne $null ) `
+				if ( $null -ne $VssPnicImport ) `
 				{ `
 					ForEach ( $VssPnic in ( $VssPnicImport | Where-Object { $VsSwitch.NicId.contains( $_.MoRef ) -and $VsSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 					{ `
@@ -11553,8 +11550,8 @@ function VSS_to_Host
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VSS to Host"
-	$Page = $DocsObj.Pages('VSS to Host')
+	$AppVisio.ActivePage.Name = "VSS to Host"
+	$DocsObj.Pages('VSS to Host')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VSS to Host')
 	$AppVisio.ScreenUpdating = $False
@@ -11784,8 +11781,8 @@ function VMK_to_VSS
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VMK to VSS"
-	$Page = $DocsObj.Pages('VMK to VSS')
+	$AppVisio.ActivePage.Name = "VMK to VSS"
+	$DocsObj.Pages('VMK to VSS')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VMK to VSS')
 	$AppVisio.ScreenUpdating = $False
@@ -11802,7 +11799,7 @@ function VMK_to_VSS
 	$VMHostTotal = $VMHostImport.Name.Count
 	$VsSwitchNumber = 0
 	$VsSwitchTotal = $VsSwitchImport.Name.Count
-	$VssVmkernelpNumber = 0
+	$VssVmkernelNumber = 0
 	$VssVmkernelTotal = $VssVmkImport.Name.Count
 	$ObjectNumber = 0
 	$ObjectsTotal = $DatacenterTotal + $ClusterTotal + $VMHostTotal + $VsSwitchTotal + $VssVmkernelTotal + $vCenterImport.Name.Count
@@ -12015,8 +12012,8 @@ function VSSPortGroup_to_VM
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VSSPortGroup to VM"
-	$Page = $DocsObj.Pages('VSSPortGroup to VM')
+	$AppVisio.ActivePage.Name = "VSSPortGroup to VM"
+	$DocsObj.Pages('VSSPortGroup to VM')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VSSPortGroup to VM')
 	$AppVisio.ScreenUpdating = $False
@@ -12364,8 +12361,8 @@ function VDS_to_Host
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VDS to Host"
-	$Page = $DocsObj.Pages('VDS to Host')
+	$AppVisio.ActivePage.Name = "VDS to Host"
+	$DocsObj.Pages('VDS to Host')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VDS to Host')
 	$AppVisio.ScreenUpdating = $False
@@ -12595,8 +12592,8 @@ function VMK_to_VDS
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VMK to VDS"
-	$Page = $DocsObj.Pages('VMK to VDS')
+	$AppVisio.ActivePage.Name = "VMK to VDS"
+	$DocsObj.Pages('VMK to VDS')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VMK to VDS')
 	$AppVisio.ScreenUpdating = $False
@@ -12613,7 +12610,7 @@ function VMK_to_VDS
 	$VMHostTotal = $VMHostImport.Name.Count
 	$VdSwitchNumber = 0
 	$VdSwitchTotal = ( ( $VdSwitchImport ).VmHostId -split "," ).Count
-	$VdsVmkernelpNumber = 0
+	$VdsVmkernelNumber = 0
 	$VdsVmkernelTotal = $VdsVmkImport.Name.Count
 	$ObjectNumber = 0
 	$ObjectsTotal = $DatacenterTotal + $ClusterTotal + $VMHostTotal + $VdSwitchTotal + $VdsVmkernelTotal + $vCenterImport.Name.Count
@@ -12826,8 +12823,8 @@ function VDSPortGroup_to_VM
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "VDSPortGroup to VM"
-	$Page = $DocsObj.Pages('VDSPortGroup to VM')
+	$AppVisio.ActivePage.Name = "VDSPortGroup to VM"
+	$DocsObj.Pages('VDSPortGroup to VM')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('VDSPortGroup to VM')
 	$AppVisio.ScreenUpdating = $False
@@ -13012,8 +13009,8 @@ function Cluster_to_DRS_Rule
 	$docsObj = $AppVisio.Documents
 	$docsObj.Open($SaveFile) | Out-Null
 	$AppVisio.ActiveDocument.Pages.Add() | Out-Null
-	$Page = $AppVisio.ActivePage.Name = "Cluster to DRS Rule"
-	$Page = $DocsObj.Pages('Cluster to DRS Rule')
+	$AppVisio.ActivePage.Name = "Cluster to DRS Rule"
+	$DocsObj.Pages('Cluster to DRS Rule')
 	$pagsObj = $AppVisio.ActiveDocument.Pages
 	$pagObj = $pagsObj.Item('Cluster to DRS Rule')
 	$AppVisio.ScreenUpdating = $False
@@ -13034,8 +13031,8 @@ function Cluster_to_DRS_Rule
 	$DrsClusterGroupNumber = 0
 	$DrsClusterGroupTotal = $DrsClusterGroupImport.Name.Count
 	$VMHostNumber = 0
-	$VMHostGroup = $DrsClusterGroupImport | Where { $_.GroupType -like "VMHostGroup" } 
-	if ($VMHostGroup -eq $null)`
+	$VMHostGroup = $DrsClusterGroupImport | Where-Object { $_.GroupType -like "VMHostGroup" } 
+	if ($null -eq $VMHostGroup)`
 	{ `
 		$VMHostTotal = 0
 	} `
@@ -13045,8 +13042,8 @@ function Cluster_to_DRS_Rule
 	}
 
 	$VMNumber = 0
-	$VMGroup = $DrsClusterGroupImport | Where { $_.GroupType -like "VMGroup" } 
-	if ($VMGroup -eq $null)`
+	$VMGroup = $DrsClusterGroupImport | Where-Object { $_.GroupType -like "VMGroup" } 
+	if ($null -eq $VMGroup)`
 	{ `
 		$VMGroupTotal = 0
 	} `
@@ -13469,7 +13466,7 @@ function Open_Final_Visio
 	$AppVisio.ActiveDocument.Pages.Item(1).Delete(1) | Out-Null
 	$AppVisio.Documents.SaveAs($SaveFile)
 	$AppVisio.Documents.SaveAs($ConvertSaveFile) | Out-Null
-	del $SaveFile
+	Remove-Item $SaveFile
 	$Host.UI.RawUI.WindowTitle = "vDiagram $MyVer"
 }
 #endregion ~~< Open_Final_Visio >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
