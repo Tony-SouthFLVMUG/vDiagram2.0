@@ -136,8 +136,8 @@ $PowerCliLatest = Find-Module -Name VMware.PowerCLI -Repository PSGallery -Error
 if ( ( $PowerCli.Name ) -match ( "VMware.PowerCLI" ) ) `
 { `
 	$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
-	Write-Host "[$DateTime] VMware PowerCLI Module" $PowerCli.Version "is installed." -ForegroundColor Green
-	if ( ( $PowerCliLatest.Version ) -gt ( $PowerCli.Version ) ) `
+	Write-Host "[$DateTime] VMware PowerCLI Module(s)" $PowerCli.Version " found on this machine." -ForegroundColor Yellow
+	if ( ( $PowerCliLatest.Version ) -gt ( $PowerCli.Version[0] ) ) `
 	{ `
 		$PowerCliUpgrade =  [System.Windows.Forms.MessageBox]::Show( "PowerCLI Module is not the latest. Would you like to upgrade? Click 'Yes' to upgrade and 'No' cancel.","Warning! PowerCLI Module is not the latest.",[System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Information )
 			switch  ( $PowerCliUpgrade ) `
@@ -168,7 +168,7 @@ if ( ( $PowerCli.Name ) -match ( "VMware.PowerCLI" ) ) `
 				'No'
 				{ `
 					$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
-					Write-Host "[$DateTime] You elected not to upgrade VMware PowerCLI Module. Current version is" $PowerCli.Version -ForegroundColor Green
+					Write-Host "[$DateTime] You elected not to upgrade VMware PowerCLI Module. Current version is" $PowerCli.Version[0] -ForegroundColor Yellow
 				}
 			}
 	}
@@ -4480,7 +4480,7 @@ $CsvValidationButton.Add_MouseClick({ $CsvValidationButton.Forecolor = [System.D
 
 #region ~~< VisioOpenOutputButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $VisioOpenOutputButton.Add_MouseClick({Find_DrawVisioFolder; 
-	if($VisioFolder -eq $null) `
+	if( $VisioFolder -eq $null ) `
 	{ `
 		$VisioOpenOutputButton.Forecolor = [System.Drawing.Color]::Red ;
 		$VisioOpenOutputButton.Text = "Folder Not Selected"
@@ -4558,7 +4558,7 @@ $DrawCheckButton.Add_Click( { $vCenter_to_LinkedvCenter_DrawCheckBox.CheckState 
 
 #region ~~< DrawButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $DrawButton.Add_Click({ `
-	if($VisioFolder -eq $null) `
+	if( $VisioFolder -eq $null ) `
 	{ `
 		$DrawButton.Forecolor = [System.Drawing.Color]::Red ;
 		$DrawButton.Text = "Folder Not Selected"
