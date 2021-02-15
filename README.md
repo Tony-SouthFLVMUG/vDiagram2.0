@@ -60,6 +60,9 @@ Powershell script that will capture and draw in Visio a VMware Infrastructure.
 	6. Click on "Open Visio Drawing" button once "Draw Visio" button says it has completed.
 
 ## CHANGE LOG
+	- 02/15/2021 - v2.0.11
+		Resolved reported issue with standalone ESXi Host.
+		Sorted Datastores by name accending.
 	- 04/09/2020 - v2.0.10
 		Added PowerCLI module version check.
 		Added PowerCLI module install if missing.
