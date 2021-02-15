@@ -10,7 +10,7 @@
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.10
+   Version		: 2.0.11
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -20,7 +20,11 @@
 		Active connection to vCenter to capture data
 
 .CHANGE LOG
-	- 03/31/2020 - v2.0.10
+	- 02/15/2021 - v2.0.11
+		Resolved reported issue with standalone ESXi Host.
+		Sorted Datastores by name accending.
+		
+	- 04/09/2020 - v2.0.10
 		Added PowerCLI module version check.
 		Added PowerCLI module install if missing.
 		Added PowerCLI module upgrade to latest if desired.
@@ -414,7 +418,7 @@ function VmHost_Export
 							ForEach ( $PnicInfo in $PnicsInfo ) `
 							{ `
 								( $PnicInfo.ConnectedSwitchPort | `
-								Select `
+								Select-Object `
 									@{ Name = "VMNic" ; Expression = { $PhysicalNic.Device } }, `
 									@{ Name = "DevId" ; Expression = { $_.DevId } }, `
 									@{ Name = "PortId" ; Expression = { $_.PortId } }, `
@@ -445,16 +449,16 @@ function Vm_Export
 			@{ Name = "ClusterId" ; Expression = { ( Get-Cluster -VM ( Get-VM -Id $_.MoRef ) ).Id } }, `
 			@{ Name = "VmHost" ; Expression = { Get-VmHost -Id ( $_.Runtime.Host ) } }, `
 			@{ Name = "VmHostId" ; Expression = { ( Get-VmHost -Id ( $_.Runtime.Host ) ).Id } }, `
-			@{ Name = "DatastoreCluster" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort Name ) ) } }, `
-			@{ Name = "DatastoreClusterId" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort Name ).Id ) } }, `
-			@{ Name = "Datastore" ; Expression = { [string]::Join( ", ", ( $_.Config.DatastoreUrl.Name | Sort Name ) ) } }, `
-			@{ Name = "DatastoreId" ; Expression = { [string]::Join( ", ", ( Get-Datastore ( $_.Config.DatastoreUrl.Name | Sort Name ) ).Id ) } }, `
-			@{ Name = "ResourcePool" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort Name ) ) } }, `
-			@{ Name = "ResourcePoolId" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort Name ).Id ) } }, `
-			@{ Name = "vSwitch" ; Expression = { [string]::Join( ", ", ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort Name ) ) } }, `
-			@{ Name = "vSwitchId" ; Expression = { [string]::Join( ", ", ( ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort Name ).Id ) ) } }, `
-			@{ Name = "PortGroup" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort Name ) ) } }, `
-			@{ Name = "PortGroupId" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort Name | `
+			@{ Name = "DatastoreCluster" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ) ) } }, `
+			@{ Name = "DatastoreClusterId" ; Expression = { [string]::Join( ", ", ( Get-DatastoreCluster -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ).Id ) } }, `
+			@{ Name = "Datastore" ; Expression = { [string]::Join( ", ", ( $_.Config.DatastoreUrl.Name | Sort-Object Name ) ) } }, `
+			@{ Name = "DatastoreId" ; Expression = { [string]::Join( ", ", ( Get-Datastore ( $_.Config.DatastoreUrl.Name | Sort-Object Name ) ).Id ) } }, `
+			@{ Name = "ResourcePool" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort-Object Name ) ) } }, `
+			@{ Name = "ResourcePoolId" ; Expression = { [string]::Join( ", ", ( Get-ResourcePool -VM ( Get-VM -Id $_.MoRef ) | Where-Object { $_ -notlike "Resources" } | Sort-Object Name ).Id ) } }, `
+			@{ Name = "vSwitch" ; Expression = { [string]::Join( ", ", ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ) ) } }, `
+			@{ Name = "vSwitchId" ; Expression = { [string]::Join( ", ", ( ( Get-VirtualSwitch -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ).Id ) ) } }, `
+			@{ Name = "PortGroup" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name ) ) } }, `
+			@{ Name = "PortGroupId" ; Expression = { [string]::Join( ", ", ( Get-VirtualPortGroup -VM ( Get-VM -Id $_.MoRef ) | Sort-Object Name | `
 				ForEach-Object `
 				{ `
 					if ($( $_.key -like "key-vim.host.PortGroup*" ) )
@@ -481,7 +485,7 @@ function Vm_Export
 			@{ Name = "IP" ; Expression = { [string]::Join(", ", ( $_.Guest.IpAddress ) ) } }, `
 			@{ Name = "MacAddress" ; Expression = { [string]::Join(", ", ( $_.Guest.Net.MacAddress ) ) } }, `
 			@{ Name = "NumVirtualDisks" ; Expression = { [string]::Join( ", ", ( $_.Summary.Config.NumVirtualDisks ) ) } }, `
-			@{ Name = "VmdkInfo" ; Expression = { [string]::Join(", ", ( Get-HardDisk -Vm $_.Name | Sort Name | `
+			@{ Name = "VmdkInfo" ; Expression = { [string]::Join(", ", ( Get-HardDisk -Vm $_.Name | Sort-Object Name | `
 				ForEach-Object `
 				{ `
 					if ($($_.DiskType -like "Raw*"))
@@ -494,7 +498,7 @@ function Vm_Export
 					}
 				} ) ) `
 			} }, `
-			@{ Name = "Volumes" ; Expression = { [string]::Join(", ", ( $_.Guest.Disk | Sort DiskPath | `
+			@{ Name = "Volumes" ; Expression = { [string]::Join(", ", ( $_.Guest.Disk | Sort-Object DiskPath | `
 				ForEach-Object `
 				{ `
 					"$( $_.DiskPath ) - $( [math]::Ceiling( $_.Capacity/1GB ) )GB Total - $( [math]::Ceiling( $_.FreeSpace/1GB ) )GB Free" `
@@ -526,7 +530,7 @@ function Template_Export
 	{ `
 		$Template | `
 		Select-Object `
-			@{ Name = "Name" ; Expression = { [string]::Join( ", ", ( ( $_.Name ) ) ) } }, `
+			@{ Name = "Name" ; Expression = { [string]::Join( ", ", ( ( [uri]::UnescapeDataString( $_.Name ) ) ) ) } }, `
 			@{ Name = "Datacenter" ; Expression = { [string]::Join( ", ", ( Get-Datacenter -VMHost ( Get-VMHost -Id $_.Runtime.Host ) ) ) } }, `
 			@{ Name = "DatacenterId" ; Expression = { [string]::Join( ", ", ( Get-Datacenter -VMHost ( Get-VMHost -Id $_.Runtime.Host ) ).Id ) } }, `
 			@{ Name = "Cluster" ; Expression = { [string]::Join( ", ", ( Get-Cluster -VMHost ( Get-VMHost -Id $_.Runtime.Host ) ) ) } }, `

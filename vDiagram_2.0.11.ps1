@@ -6,11 +6,11 @@
    vDiagram Visio Drawing Tool
 
 .NOTES 
-   File Name	: vDiagram_2.0.10.ps1 
+   File Name	: vDiagram_2.0.11.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.10
+   Version		: 2.0.11
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -21,6 +21,10 @@
 		MS Visio
 
 .CHANGE LOG
+	- 02/15/2021 - v2.0.11
+		Resolved reported issue with standalone ESXi Host.
+		Sorted Datastores by name accending.
+
 	- 04/09/2020 - v2.0.10
 		Added PowerCLI module version check.
 		Added PowerCLI module install if missing.
@@ -188,8 +192,8 @@ else `
 
 #region ~~< About >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $FileDateTime = (Get-Date -format "yyyy_MM_dd-HH_mm")
-$MyVer = "2.0.10"
-$LastUpdated = "April 09, 2020"
+$MyVer = "2.0.11"
+$LastUpdated = "February 15, 2021"
 $About = 
 @"
 
@@ -3092,6 +3096,11 @@ else `
 { `
 	$VisioInstalled.Forecolor = "Red"
 	$VisioInstalled.Text = "Visio is Not Installed"
+	[System.Windows.Forms.MessageBox]::Show("Visio is not installed on this machine.
+	
+In order to complete the draw process Visio is required, you can capture from this machine and export the outputs to a machine with Visio installed then re-run and point the tool to the folder to continue the draw process.
+
+When drawing on another machine please make sure to enter the vCenter name exactly as it was entered during the capture phase.", "Warning Visio Not Found",0,48)
 }
 #endregion ~~< VisioCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -8587,7 +8596,7 @@ function VM_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -9724,7 +9733,7 @@ function SRM_Protected_VMs
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) ) `
+			ForEach ( $VmHost in ( ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -10815,7 +10824,7 @@ function Datastore_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -10835,7 +10844,7 @@ function Datastore_to_Host
 				Connect-VisioObject $ClusterObject $HostObject
 				$y += 1.50	
 				
-				ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $VmHost.DatastoreId.contains( $_.MoRef ) -and $VmHost.Datastore.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+				ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $VmHost.DatastoreId.contains( $_.MoRef ) -and $VmHost.Datastore.contains( $_.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$DatastoreObject = Add-VisioObjectDatastore $DatastoreObj $Datastore
@@ -11309,7 +11318,7 @@ function PhysicalNIC_to_vSwitch
 			$ClusterObject.Cells("Prop.HostMonitoring").Formula = '"' + $Cluster.HostMonitoring + '"'
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11628,7 +11637,7 @@ function VSS_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11859,7 +11868,7 @@ function VMK_to_VSS
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12093,7 +12102,7 @@ function VSSPortGroup_to_VM
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12439,7 +12448,7 @@ function VDS_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12670,7 +12679,7 @@ function VMK_to_VDS
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
