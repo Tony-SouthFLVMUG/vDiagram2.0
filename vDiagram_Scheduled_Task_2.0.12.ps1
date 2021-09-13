@@ -6,11 +6,11 @@
    vDiagram Scheduled Export
 
 .NOTES 
-   File Name	: vDiagram_Scheduled_Task_2.0.10.ps1 
+   File Name	: vDiagram_Scheduled_Task_2.0.12.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.11
+   Version		: 2.0.12
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -20,7 +20,10 @@
 		Active connection to vCenter to capture data
 
 .CHANGE LOG
-	- 02/15/2021 - v2.0.11
+	- 09/12/2021 - v2.0.12
+		Added option to choose between vDiagram Visio Shapes and VMware Validated Design Shapes
+
+	- 10/07/2020 - v2.0.11
 		Resolved reported issue with standalone ESXi Host.
 		Sorted Datastores by name accending.
 		

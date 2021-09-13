@@ -6,11 +6,11 @@
    vDiagram Visio Drawing Tool
 
 .NOTES 
-   File Name	: vDiagram_2.0.11.ps1 
+   File Name	: vDiagram_2.0.12.ps1 
    Author		: Tony Gonzalez
    Author		: Jason Hopkins
    Based on		: vDiagram by Alan Renouf
-   Version		: 2.0.11
+   Version		: 2.0.12
 
 .USAGE NOTES
 	Ensure to unblock files before unzipping
@@ -21,7 +21,10 @@
 		MS Visio
 
 .CHANGE LOG
-	- 02/15/2021 - v2.0.11
+	- 09/12/2021 - v2.0.12
+		Added option to choose between vDiagram Visio Shapes and VMware Validated Design Shapes
+
+	- 10/07/2020 - v2.0.11
 		Resolved reported issue with standalone ESXi Host.
 		Sorted Datastores by name accending.
 
@@ -86,19 +89,19 @@
 #>
 
 #region ~~< Parameters >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Param(
-	[Switch] $debug,
-	[Switch] $logcapture,
-	[Switch] $logdraw
+param(
+	[switch] $debug,
+	[switch] $logcapture,
+	[switch] $logdraw
 )
 #endregion ~~< Parameters >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #region ~~< Admin Check >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
 [Security.Principal.WindowsBuiltInRole] "Administrator")) `
 { `
 	Write-Warning "Insufficient permissions to run this script. Open the PowerShell console as an administrator and run this script again."
-	Break
+	break
 }
 #endregion ~~< Admin Check >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -119,7 +122,7 @@ function Find_PowerCliModule
 			'Yes' 
 			{ `
 				Write-Host "[$DateTime] Installing Module" $VMwareModule.Name -ForegroundColor Green
-				Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+				set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
 				Install-Module -Name VMware.PowerCLI -Scope AllUsers -AllowClobber
 				$PowerCliUpdate = Get-Module -Name VMware.PowerCLI -ListAvailable
 				Write-Host "[$DateTime] VMware PowerCLI Module" $PowerCliUpdate.Version "is installed." -ForegroundColor Green
@@ -164,7 +167,7 @@ if ( ( $PowerCli.Name ) -match ( "VMware.PowerCLI" ) ) `
 					}
 					$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
 					Write-Host "[$DateTime] Installing latest VMware PowerCLI Module" -ForegroundColor Green
-					Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+					set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
 					Install-Module -Name VMware.PowerCLI -Scope AllUsers -AllowClobber
 					$PowerCliUpdate = Get-Module -Name VMware.PowerCLI -ListAvailable
 					Write-Host "[$DateTime] VMware PowerCLI Module" $PowerCliUpdate.Version "is installed." -ForegroundColor Green
@@ -192,8 +195,8 @@ else `
 
 #region ~~< About >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $FileDateTime = (Get-Date -format "yyyy_MM_dd-HH_mm")
-$MyVer = "2.0.11"
-$LastUpdated = "February 15, 2021"
+$MyVer = "2.0.12"
+$LastUpdated = "Septemberer 12, 2021"
 $About = 
 @"
 
@@ -214,15 +217,22 @@ $About =
 #region ~~< TestShapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if ( ( Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) -or $null -ne (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -like "*Visio*" -and $_.DisplayName -notlike "*Visio View*" } | Select-Object DisplayName ) ) `
 { `
-	$TestShapes = [System.Environment]::GetFolderPath('MyDocuments') + "\My Shapes\vDiagram_" + $MyVer + ".vssx"
-	if (!(Test-Path $TestShapes))
+	$TestShapes1 = [System.Environment]::GetFolderPath('MyDocuments') + "\My Shapes\vDiagram_" + $MyVer + ".vssx"
+	if (!(Test-Path $TestShapes1))
 	{
 		$CurrentLocation = Get-Location
 		$UpdatedShapes = "$CurrentLocation" + "\vDiagram_" + "$MyVer" + ".vssx"
-		Copy-Item $UpdatedShapes $TestShapes
-		Write-Host "Copying Shapes File to My Shapes"
+		Copy-Item $UpdatedShapes $TestShapes1
+		Write-Host "Copying Default Shapes File to My Shapes"
 	}
-	$shpFile = "\vDiagram_" + $MyVer + ".vssx"
+	$TestShapes2 = [System.Environment]::GetFolderPath('MyDocuments') + "\My Shapes\vDiagram_" + $MyVer + "_VVD" + ".vssx"
+	if (!(Test-Path $TestShapes2))
+	{
+		$CurrentLocation = Get-Location
+		$UpdatedShapes = "$CurrentLocation" + "\vDiagram_" + "$MyVer" + "_VVD" + ".vssx"
+		Copy-Item $UpdatedShapes $TestShapes2
+		Write-Host "Copying VMware VVD Shapes File to My Shapes"
+	}
 }
 #endregion ~~< TestShapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -704,7 +714,7 @@ $DrawDirections = New-Object System.Windows.Forms.Label
 $DrawDirections.Location = New-Object System.Drawing.Point(8, 288)
 $DrawDirections.Size = New-Object System.Drawing.Size(900, 130)
 $DrawDirections.TabIndex = 7
-$DrawDirections.Text = "1. Click on "+[char]34+"Select Input Folder"+[char]34+" button and select location where CSVs can be found."+[char]13+[char]10+"2. Click on "+[char]34+"Check for CSVs"+[char]34+" button to validate presence of required files."+[char]13+[char]10+"3. Click on "+[char]34+"Select Output Folder"+[char]34+" button and select where location where you would like to save the Visio drawing."+[char]13+[char]10+"4. Select drawing that you would like to produce."+[char]13+[char]10+"5. Click on "+[char]34+"Draw Visio"+[char]34+" button."+[char]13+[char]10+"6. Click on "+[char]34+"Open Visio Drawing"+[char]34+" button once "+[char]34+"Draw Visio"+[char]34+" button says it has completed."
+$DrawDirections.Text = "1. Click on "+[char]34+"Select Input Folder"+[char]34+" button and select location where CSVs can be found."+[char]13+[char]10+"2. Click on "+[char]34+"Check for CSVs"+[char]34+" button to validate presence of required files."+[char]13+[char]10+"4. Select shape file that you would like to use."+[char]13+[char]10+"4. Click on "+[char]34+"Select Output Folder"+[char]34+" button and select where location where you would like to save the Visio drawing."+[char]13+[char]10+"5. Select drawing that you would like to produce."+[char]13+[char]10+"6. Click on "+[char]34+"Draw Visio"+[char]34+" button."+[char]13+[char]10+"7. Click on "+[char]34+"Open Visio Drawing"+[char]34+" button once "+[char]34+"Draw Visio"+[char]34+" button says it has completed."
 $TabDirections.Controls.Add($DrawDirections)
 #endregion ~~< DrawDirections >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2290,6 +2300,42 @@ $CsvValidationButton.BackColor = [System.Drawing.Color]::LightGray
 $TabDraw.Controls.Add($CsvValidationButton)
 #endregion ~~< CsvValidationButton >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+#region ~~< ShapesfileSelection >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#region ~~< ShapesfileSelectionText >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ShapesfileSelectionText = New-Object System.Windows.Forms.Label
+$ShapesfileSelectionText.Font = New-Object System.Drawing.Font("Tahoma", 15.0, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Point, ( [System.Byte] ( 0 ) ) )
+$ShapesfileSelectionText.Location = New-Object System.Drawing.Point(300, 200)
+$ShapesfileSelectionText.Size = New-Object System.Drawing.Size(300, 25)
+$ShapesfileSelectionText.TabIndex = 51
+$ShapesfileSelectionText.Text = "Select the Visio Shape File:"
+$TabDraw.Controls.Add($ShapesfileSelectionText)
+#endregion ~~< ShapesfileSelectionText >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#region ~~< ShapesfileSelectionRadioButton1 >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ShapesfileSelectionRadioButton1 = New-Object System.Windows.Forms.RadioButton
+$ShapesfileSelectionRadioButton1.Location = New-Object System.Drawing.Point(600, 200)
+$ShapesfileSelectionRadioButton1.Size = New-Object System.Drawing.Size(190, 25)
+$ShapesfileSelectionRadioButton1.Checked = $true
+$ShapesfileSelectionRadioButton1.TabIndex = 52
+$ShapesfileSelectionRadioButton1.TabStop = $true
+$ShapesfileSelectionRadioButton1.Text = "vDiagram Default Shapes"
+$ShapesfileSelectionRadioButton1.UseVisualStyleBackColor = $true
+#endregion ~~< ShapesfileSelectionRadioButton1 >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#region ~~< ShapesfileSelectionRadioButton2 >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ShapesfileSelectionRadioButton2 = New-Object System.Windows.Forms.RadioButton
+$ShapesfileSelectionRadioButton2.Location = New-Object System.Drawing.Point(800, 200)
+$ShapesfileSelectionRadioButton2.Size = New-Object System.Drawing.Size(190, 25)
+$ShapesfileSelectionRadioButton2.TabIndex =53
+$ShapesfileSelectionRadioButton2.TabStop = $true
+$ShapesfileSelectionRadioButton2.Text = "VMware VVD Shapes"
+$ShapesfileSelectionRadioButton2.UseVisualStyleBackColor = $true
+$TabDraw.Controls.AddRange(@($ShapesfileSelectionRadioButton1,$ShapesfileSelectionRadioButton2))
+#endregion ~~< ShapesfileSelectionRadioButton2 >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#endregion ~~< ShapesfileSelection >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #region ~~< CsvValidationButtonToolTip >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 $CsvValidationButtonToolTip = New-Object System.Windows.Forms.ToolTip($components)
 $CsvValidationButtonToolTip.IsBalloon = $true
@@ -3066,6 +3112,7 @@ else `
 	$PowerCliModuleInstalled.Forecolor = "Red"
 	$PowerCliModuleInstalled.Text = "Not Installed"
 }
+
 #endregion ~~< PowerCliModuleCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #region ~~< PowerCliCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3084,6 +3131,7 @@ else `
 	$PowerCliInstalled.Forecolor = "Red"
 	$PowerCliInstalled.Text = "PowerCLI or PowerCli Module not installed"
 }
+
 #endregion ~~< PowerCliCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #region ~~< VisioCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3096,12 +3144,8 @@ else `
 { `
 	$VisioInstalled.Forecolor = "Red"
 	$VisioInstalled.Text = "Visio is Not Installed"
-	[System.Windows.Forms.MessageBox]::Show("Visio is not installed on this machine.
-	
-In order to complete the draw process Visio is required, you can capture from this machine and export the outputs to a machine with Visio installed then re-run and point the tool to the folder to continue the draw process.
-
-When drawing on another machine please make sure to enter the vCenter name exactly as it was entered during the capture phase.", "Warning Visio Not Found",0,48)
 }
+
 #endregion ~~< VisioCheck >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #endregion ~~< Checks >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3989,7 +4033,7 @@ $CsvValidationButton.Add_Click(
 	}
 	
 	$SrmVMsFile = $CsvInputDir + "-VmExport.csv"
-	$SrmVMs = Import-csv $SrmVMsFile
+	$SrmVMs = Import-Csv $SrmVMsFile
 	$SrmVMCount = ( $SrmVMs | Where-Object { $_.SRM.contains("placeholderVm") } ).Count
 	if ($SrmVMCount -eq 0) `
 	{ `
@@ -4588,6 +4632,7 @@ $DrawButton.Add_Click({ `
 		$Host.UI.RawUI.WindowTitle = "vDiagram $MyVer Drawing $vCenter"
 		$DrawButton.Forecolor = [System.Drawing.Color]::Blue ;
 		$DrawButton.Text = "Drawing Please Wait" ;
+        Shapefile_Select;
 		Create_Visio_Base;
 		if ($vCenter_to_LinkedvCenter_DrawCheckBox.Checked -eq "True") `
 		{ `
@@ -4949,7 +4994,7 @@ function Check_CaptureCsvFolder
 				$CheckContentCsvBrowse.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 				$CheckContentCsvBrowse.ShowDialog()
 				$global:NewContentCsvFolder = $CheckContentCsvBrowse.SelectedPath
-				copy-item -Path $CheckContentDir -Destination $NewContentCsvFolder
+				Copy-Item -Path $CheckContentDir -Destination $NewContentCsvFolder
 				Remove-Item $CheckContentDir
 				if ( $debug -eq $true )`
 				{ `
@@ -5081,7 +5126,7 @@ function Datacenter_Export
 	$i = 0
 	$DatastoreNumber = 0
 
-	ForEach( $Datacenter in ( Get-View -ViewType Datacenter | Sort-Object Name ) ) `
+	foreach( $Datacenter in ( Get-View -ViewType Datacenter | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5096,10 +5141,10 @@ function Datacenter_Export
 		$Datacenter | `
 		Select-Object `
 			@{ Name = "Name" ; Expression = { [string]::Join(", ", ( $_.Name ) ) } }, `
-			@{ Name = "VmFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -Type VM | Where-Object { $_.MoRef -eq $_.VmFolder } | Sort-Object Name ) ) } }, `
-			@{ Name = "HostFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -Type HostAndCluster | Where-Object { $_.MoRef -eq $_.HostFolder } | Sort-Object Name ) ) } }, `
-			@{ Name = "DatastoreFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -Type Datastore | Where-Object { $_.MoRef -eq $_.DatastoreFolder } | Sort-Object Name ) ) } }, `
-			@{ Name = "NetworkFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -Type Network | Where-Object { $_.MoRef -eq $_.NetworkFolder } | Sort-Object Name ) ) } }, `
+			@{ Name = "VmFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -type VM | Where-Object { $_.MoRef -eq $_.VmFolder } | Sort-Object Name ) ) } }, `
+			@{ Name = "HostFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -type HostAndCluster | Where-Object { $_.MoRef -eq $_.HostFolder } | Sort-Object Name ) ) } }, `
+			@{ Name = "DatastoreFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -type Datastore | Where-Object { $_.MoRef -eq $_.DatastoreFolder } | Sort-Object Name ) ) } }, `
+			@{ Name = "NetworkFolder" ; Expression = { [string]::Join(", ", ( Get-Folder -Location $_.Name -type Network | Where-Object { $_.MoRef -eq $_.NetworkFolder } | Sort-Object Name ) ) } }, `
 			@{ Name = "Cluster" ; Expression = { [string]::Join(", ", ( Get-Cluster -Location $_.Name | Sort-Object Name ) ) } }, `
 			@{ Name = "ClusterId" ; Expression = { [string]::Join(", ", ( Get-Cluster -Location $_.Name | Sort-Object Name ).Id ) } }, `
 			@{ Name = "VmHost" ; Expression = { [string]::Join(", ", ( Get-VMHost -Location $_.Name | Sort-Object Name ) ) } }, `
@@ -5108,8 +5153,8 @@ function Datacenter_Export
 			@{ Name = "VmId" ; Expression = { [string]::Join(", ", ( Get-VM -Location $_.Name | Sort-Object Name ).Id ) } }, `
 			@{ Name = "Template" ; Expression = { [string]::Join(", ", ( Get-Template -Location $_.Name | Sort-Object Name ) ) } }, `
 			@{ Name = "TemplateId" ; Expression = { [string]::Join(", ", ( Get-Template -Location $_.Name | Sort-Object Name ).Id ) } }, `
-			@{ Name = "Folder" ; Expression = { [string]::Join(", ", ( Get-Folder -Type Datacenter | Where-Object { $_.MoRef -eq $_.DatacenterFolder } | Sort-Object Name ) ) } }, `
-			@{ Name = "FolderId" ; Expression = { [string]::Join(", ", ( Get-Folder -Type Datacenter ).Id ) } }, `
+			@{ Name = "Folder" ; Expression = { [string]::Join(", ", ( Get-Folder -type Datacenter | Where-Object { $_.MoRef -eq $_.DatacenterFolder } | Sort-Object Name ) ) } }, `
+			@{ Name = "FolderId" ; Expression = { [string]::Join(", ", ( Get-Folder -type Datacenter ).Id ) } }, `
 			@{ Name = "DatastoreCluster" ; Expression = { [string]::Join(", ", ( Get-DatastoreCluster -Location $_.Name | Sort-Object Name ) ) } }, `
 			@{ Name = "DatastoreClusterId" ; Expression = { [string]::Join(", ", ( Get-DatastoreCluster -Location $_.Name | Sort-Object Name ).Id ) } }, `
 			@{ Name = "Datastore" ; Expression = { [string]::Join(", ", ( Get-Datastore -Id $_.Datastore | Sort-Object Name ) ) } }, `
@@ -5120,7 +5165,7 @@ function Datacenter_Export
 			@{ Name = "NetworkId" ; Expression = { [string]::Join(", ", ( Get-VirtualPortGroup | Where-Object { $_.MoRef -eq $_.Network } | Sort-Object Name ).Id  ) } }, `
 			@{ Name = "DefaultHardwareVersionKey" ; Expression = { [string]::Join(", ", ( $_.Configuration.DefaultHardwareVersionKey | Sort-Object Name ) ) } }, `
 			@{ Name = "LinkedView" ; Expression = { [string]::Join(", ", ( $_.LinkedView | Sort-Object Name ) ) } }, `
-			@{ Name = "Parent" ; Expression = { [string]::Join(", ", ( Get-Folder -Type Datacenter | Where-Object { $_.MoRef -eq $_.Parent } | Sort-Object Name ) ) } }, `
+			@{ Name = "Parent" ; Expression = { [string]::Join(", ", ( Get-Folder -type Datacenter | Where-Object { $_.MoRef -eq $_.Parent } | Sort-Object Name ) ) } }, `
 			@{ Name = "OverallStatus" ; Expression = { [string]::Join(", ", ( $_.OverallStatus ) ) } }, `
 			@{ Name = "ConfigStatus" ; Expression = { [string]::Join(", ", ( $_.ConfigStatus ) ) } }, `
 			@{ Name = "ConfigIssue" ; Expression = { [string]::Join( ", ", ( $_.ConfigIssue ) ) } }, `
@@ -5149,7 +5194,7 @@ function Cluster_Export
 	$i = 0
 	$ClusterNumber = 0
 	
-	ForEach( $Cluster in ( Get-View -ViewType ClusterComputeResource | Sort-Object Name ) ) `
+	foreach( $Cluster in ( Get-View -ViewType ClusterComputeResource | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5216,7 +5261,7 @@ function VmHost_Export
 	$i = 0
 	$VmHostNumber = 0
 	
-	ForEach( $VmHost in ( Get-View -ViewType HostSystem | Sort-Object Name ) ) `
+	foreach( $VmHost in ( Get-View -ViewType HostSystem | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5306,7 +5351,7 @@ function VmHost_Export
 		    @{ Name = "iSCSIVlanID" ; Expression = { [string]::Join( ", ", ( ( Get-EsxCli -V2 -VMHost $_.Name ).Iscsi.NetworkPortal.List.Invoke() ).VlanID ) } }, `
 		    @{ Name = "iSCSIVswitch" ; Expression = { [string]::Join( ", ", ( ( Get-EsxCli -V2 -VMHost $_.Name ).Iscsi.NetworkPortal.List.Invoke() ).VSwitch ) } }, `
 		    @{ Name = "iSCSICompliantStatus" ; Expression = { [string]::Join( ", ", ( ( Get-EsxCli -V2 -VMHost $_.Name ).Iscsi.NetworkPortal.List.Invoke() ).CompliantStatus ) } }, `
-		    @{ Name = "IScsiName" ; Expression = { [string]::Join( ", ", ( Get-VMHost $_.Name | Get-VMHostHBA -Type IScsi ).IScsiName ) } }, `
+		    @{ Name = "IScsiName" ; Expression = { [string]::Join( ", ", ( Get-VMHost $_.Name | Get-VMHostHBA -type IScsi ).IScsiName ) } }, `
             @{ Name = "PortGroup" ; Expression = { `
 				if ( $_.Network -like "DistributedVirtualPortgroup*" ) { [string]::Join( ", ", ( Get-VDPortGroup -Id $_.Network | Sort-Object Name ) ) } `
                 elseif ( $_.Network -like "VmwareDistributedVirtualSwitch*" ) { [string]::Join( ", ", ( Get-VDSwitch -Id $_.Network | Sort-Object Name ) ) } `
@@ -5318,10 +5363,10 @@ function VmHost_Export
 			@{ Name = "CdpLldpInfo" ; Expression = { [string]::Join( ", ", ( Get-VMHost $_.Name | `
 				ForEach-Object { Get-View $_.Id } | `
 					ForEach-Object { Get-View $_.ConfigManager.NetworkSystem} | `
-						ForEach-Object { ForEach ( $PhysicalNic in $_.NetworkInfo.Pnic ) `
+						ForEach-Object { foreach ( $PhysicalNic in $_.NetworkInfo.Pnic ) `
 						{ `
 							$PnicsInfo = $_.QueryNetworkHint( $PhysicalNic.Device ) 
-							ForEach ( $PnicInfo in $PnicsInfo ) `
+							foreach ( $PnicInfo in $PnicsInfo ) `
 							{ `
 								( $PnicInfo.ConnectedSwitchPort | `
 								Select-Object `
@@ -5353,7 +5398,7 @@ function Vm_Export
 	$i = 0
 	$VmNumber = 0
 	
-	ForEach( $VM in ( Get-View -ViewType VirtualMachine | Where-Object { $_.Config.Template -eq $False } | Sort-Object Name ) ) `
+	foreach( $VM in ( Get-View -ViewType VirtualMachine | Where-Object { $_.Config.Template -eq $False } | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5461,7 +5506,7 @@ function Template_Export
 	$i = 0
 	$TemplateNumber = 0
 	
-	ForEach( $Template in ( Get-View -ViewType VirtualMachine | Where-Object { $_.Config.Template -eq $True } | Sort-Object Name ) ) `
+	foreach( $Template in ( Get-View -ViewType VirtualMachine | Where-Object { $_.Config.Template -eq $True } | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5526,7 +5571,7 @@ function DatastoreCluster_Export
 	$i = 0
 	$DatastoreClusterNumber = 0
 
-	ForEach( $DatastoreCluster in ( Get-View -ViewType StoragePod | Sort-Object Name ) ) `
+	foreach( $DatastoreCluster in ( Get-View -ViewType StoragePod | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5577,7 +5622,7 @@ function Datastore_Export
 	$i = 0
 	$DatastoreNumber = 0	
 	
-	ForEach( $Datastore in ( Get-View -ViewType Datastore | Sort-Object Name ) ) `
+	foreach( $Datastore in ( Get-View -ViewType Datastore | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5634,7 +5679,7 @@ function VsSwitch_Export
 	$i = 0
 	$VsSwitchNumber = 0
 
-	ForEach( $VsSwitch in ( Get-VirtualSwitch -Standard | Sort-Object Name ) ) `
+	foreach( $VsSwitch in ( Get-VirtualSwitch -Standard | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -5702,11 +5747,11 @@ function VssPort_Export
 	$i = 0
 	$VssPortGroupNumber = 0
 	
-	ForEach ( $VMHost in Get-VMHost ) `
+	foreach ( $VMHost in Get-VMHost ) `
 	{ `
-		ForEach ( $VsSwitch in ( Get-VirtualSwitch -Standard -VMHost $VmHost ) ) `
+		foreach ( $VsSwitch in ( Get-VirtualSwitch -Standard -VMHost $VmHost ) ) `
 		{ `
-			ForEach( $VssPortGroup in ( Get-VirtualPortGroup -Standard -VirtualSwitch $VsSwitch | Sort-Object Name ) ) `
+			foreach( $VssPortGroup in ( Get-VirtualPortGroup -Standard -VirtualSwitch $VsSwitch | Sort-Object Name ) ) `
 			{ `
 				if ( $debug -eq $true )`
 				{ `
@@ -5778,13 +5823,13 @@ function VssVmk_Export
 	$i = 0
 	$VssVmkernelNumber = 0
 	
-	ForEach ( $VMHost in Get-VMHost ) `
+	foreach ( $VMHost in Get-VMHost ) `
 	{ `
-		ForEach ( $VsSwitch in ( Get-VirtualSwitch -VMHost $VmHost -Standard ) ) `
+		foreach ( $VsSwitch in ( Get-VirtualSwitch -VMHost $VmHost -Standard ) ) `
 		{ `
-			ForEach ( $VssPort in ( Get-VirtualPortGroup -Standard -VMHost $VmHost | Sort-Object Name ) ) `
+			foreach ( $VssPort in ( Get-VirtualPortGroup -Standard -VMHost $VmHost | Sort-Object Name ) ) `
 			{ `
-				ForEach ( $VMHostNetworkAdapterVMKernel in ( Get-VMHostNetworkAdapter -VMKernel -VirtualSwitch $VsSwitch -PortGroup $VssPort | Sort-Object Name ) ) `
+				foreach ( $VMHostNetworkAdapterVMKernel in ( Get-VMHostNetworkAdapter -VMKernel -VirtualSwitch $VsSwitch -PortGroup $VssPort | Sort-Object Name ) ) `
 				{ `
 					if ( $debug -eq $true )`
 					{ `
@@ -5851,11 +5896,11 @@ function VssPnic_Export
 	$i = 0
 	$VssPnicNumber = 0
 	
-	ForEach ( $VMHost in Get-VMHost ) `
+	foreach ( $VMHost in Get-VMHost ) `
 	{ `
-		ForEach ( $VsSwitch in ( Get-VirtualSwitch -Standard -VMHost $VmHost ) ) `
+		foreach ( $VsSwitch in ( Get-VirtualSwitch -Standard -VMHost $VmHost ) ) `
 		{ `
-			ForEach ( $VMHostNetworkAdapterUplink in ( Get-VMHostNetworkAdapter -Physical -VirtualSwitch $VsSwitch -VMHost $VmHost | Sort-Object Name ) ) `
+			foreach ( $VMHostNetworkAdapterUplink in ( Get-VMHostNetworkAdapter -Physical -VirtualSwitch $VsSwitch -VMHost $VmHost | Sort-Object Name ) ) `
 			{ `
 				if ( $debug -eq $true )`
 				{ `
@@ -5926,7 +5971,7 @@ function VdSwitch_Export
 	$i = 0
 	$VdSwitchNumber = 0
 	
-	ForEach( $DistributedVirtualSwitch in ( Get-View -ViewType DistributedVirtualSwitch ) ) `
+	foreach( $DistributedVirtualSwitch in ( Get-View -ViewType DistributedVirtualSwitch ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -6252,7 +6297,7 @@ function VdsPort_Export
 	$i = 0
 	$VdsPortGroupNumber = 0
 	
-	ForEach( $DistributedVirtualPortgroup in ( Get-View -ViewType DistributedVirtualPortgroup ) ) `
+	foreach( $DistributedVirtualPortgroup in ( Get-View -ViewType DistributedVirtualPortgroup ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -6308,11 +6353,11 @@ function VdsVmk_Export
 	$i = 0
 	$VdsVmkernelNumber = 0
 	
-	ForEach ( $VmHost in Get-VmHost ) `
+	foreach ( $VmHost in Get-VmHost ) `
 	{ `
-		ForEach ( $VdSwitch in ( Get-VdSwitch -VMHost $VmHost ) ) `
+		foreach ( $VdSwitch in ( Get-VdSwitch -VMHost $VmHost ) ) `
 		{ `
-			ForEach ( $VdsVmkernel in ( Get-VMHostNetworkAdapter -VMKernel -VirtualSwitch $VdSwitch -VMHost $VmHost | Sort-Object -Property Name -Unique ) ) `
+			foreach ( $VdsVmkernel in ( Get-VMHostNetworkAdapter -VMKernel -VirtualSwitch $VdSwitch -VMHost $VmHost | Sort-Object -Property Name -Unique ) ) `
 			{ `
 				if ( $debug -eq $true )`
 				{ `
@@ -6367,11 +6412,11 @@ function VdsPnic_Export
 	$i = 0
 	$VdsPnicNumber = 0
 	
-	ForEach ( $VmHost in Get-VmHost ) `
+	foreach ( $VmHost in Get-VmHost ) `
 	{ `
-		ForEach ( $VdSwitch in ( Get-VdSwitch -VMHost $VmHost ) ) `
+		foreach ( $VdSwitch in ( Get-VdSwitch -VMHost $VmHost ) ) `
 		{ `
-			ForEach ( $VMHostNetworkAdapterUplink in ( Get-VMHostNetworkAdapter -Physical -VirtualSwitch $VdSwitch -VMHost $VmHost | Sort-Object Name ) ) `
+			foreach ( $VMHostNetworkAdapterUplink in ( Get-VMHostNetworkAdapter -Physical -VirtualSwitch $VdSwitch -VMHost $VmHost | Sort-Object Name ) ) `
 			{ `
 				if ( $debug -eq $true )`
 				{ `
@@ -6445,9 +6490,9 @@ function Folder_Export
 	$i = 0
 	$FolderNumber = 0
 	
-	ForEach ( $Datacenter in Get-Datacenter ) `
+	foreach ( $Datacenter in Get-Datacenter ) `
 	{ `
-		ForEach ( $Folder in ( Get-Datacenter $Datacenter | Get-Folder | Get-View | Sort-Object ) ) `
+		foreach ( $Folder in ( Get-Datacenter $Datacenter | Get-Folder | Get-View | Sort-Object ) ) `
 		{ `
 			if ( $debug -eq $true )`
 			{ `
@@ -6676,7 +6721,7 @@ function Rdm_Export
 	$i = 0
 	$RdmNumber = 0
 	
-	ForEach( $RDM in ( Get-VM | Get-HardDisk | Where-Object { $_.DiskType -like "Raw*" } | Sort-Object Parent ) ) `
+	foreach( $RDM in ( Get-VM | Get-HardDisk | Where-Object { $_.DiskType -like "Raw*" } | Sort-Object Parent ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -6724,9 +6769,9 @@ function Drs_Rule_Export
 	$i = 0
 	$DrsRuleNumber = 0
 	
-	ForEach ( $Cluster in Get-Cluster ) `
+	foreach ( $Cluster in Get-Cluster ) `
 	{ `
-		ForEach ( $DrsRule in ( Get-Cluster $Cluster | Get-DrsRule | Sort-Object Name) ) `
+		foreach ( $DrsRule in ( Get-Cluster $Cluster | Get-DrsRule | Sort-Object Name) ) `
 		{ `
 			if ( $debug -eq $true )`
 			{ `
@@ -6771,9 +6816,9 @@ function Drs_Cluster_Group_Export
 	$i = 0
 	$DrsClusterGroupNumber = 0
 	
-	ForEach ( $Cluster in Get-Cluster ) `
+	foreach ( $Cluster in Get-Cluster ) `
 	{ `
-		ForEach ( $DrsClusterGroup in ( Get-DrsClusterGroup -Cluster $Cluster | Sort-Object Name ) ) `
+		foreach ( $DrsClusterGroup in ( Get-DrsClusterGroup -Cluster $Cluster | Sort-Object Name ) ) `
 		{ `
 			if ( $debug -eq $true )`
 			{ `
@@ -6826,9 +6871,9 @@ function Drs_VmHost_Rule_Export
 	$i = 0
 	$DrsVmHostRuleNumber = 0
 	
-	ForEach ( $Cluster in Get-Cluster ) `
+	foreach ( $Cluster in Get-Cluster ) `
 	{ `
-		ForEach ( $DrsVmHostRule in ( Get-Cluster $Cluster | Get-DrsVmHostRule | Sort-Object Name ) ) `
+		foreach ( $DrsVmHostRule in ( Get-Cluster $Cluster | Get-DrsVmHostRule | Sort-Object Name ) ) `
 		{ `
 			if ( $debug -eq $true )`
 			{ `
@@ -6879,7 +6924,7 @@ function Resource_Pool_Export
 	$i = 0
 	$ResourcePoolNumber = 0
 	
-	ForEach( $ResourcePool in ( Get-View -ViewType ResourcePool | Sort-Object Name ) ) `
+	foreach( $ResourcePool in ( Get-View -ViewType ResourcePool | Sort-Object Name ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -6938,7 +6983,7 @@ function Snapshot_Export
 	$i = 0
 	$SnapshotNumber = 0
 	
-	ForEach( $Snapshot in ( Get-VM | Get-Snapshot | Sort-Object  VM, Created ) ) `
+	foreach( $Snapshot in ( Get-VM | Get-Snapshot | Sort-Object  VM, Created ) ) `
 	{ `
 		if ( $debug -eq $true )`
 		{ `
@@ -6987,7 +7032,7 @@ function Linked_vCenter_Export
 	
 	if ( ( $global:DefaultVIServers ).Count -gt "1" ) `
 	{ `
-		ForEach ( $LinkedvCenter in ( $global:DefaultVIServers | Where-Object { $_.Name -ne "$vCenter" } ) ) `
+		foreach ( $LinkedvCenter in ( $global:DefaultVIServers | Where-Object { $_.Name -ne "$vCenter" } ) ) `
 		{ `
 			if ( $debug -eq $true )`
 			{ `
@@ -7014,6 +7059,47 @@ function Linked_vCenter_Export
 #endregion ~~< Linked_vCenter_Export >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #endregion ~~< Export Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#region ~~< Shapefile Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function Shapefile_Select
+{
+	if ( $logdraw -eq $true ) `
+	{ `
+		if ( $ShapesfileSelectionRadioButton1.Checked -eq $true ) `
+		{ `
+			$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
+			Write-Host "[$DateTime] vDiagram Default Shapes file selected." -ForegroundColor Magenta
+		}
+		else `
+		{ `
+			$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
+			Write-Host "[$DateTime] VMware VVD Shapes file selected." -ForegroundColor Magenta
+		}
+	}
+	$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
+	if ( $debug -eq $true )`
+	{ `
+		if ( $ShapesfileSelectionRadioButton1.Checked -eq $true ) `
+		{ `
+			$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
+			Write-Host "[$DateTime] Setting vDiagram Default Shapes as shape file." -ForegroundColor Magenta
+		}
+		else `
+		{ `
+			$DateTime = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
+			Write-Host "[$DateTime] Setting VMware VVD Shapes as shape file." -ForegroundColor Magenta
+		}
+	}
+	if ( $ShapesfileSelectionRadioButton1.Checked -eq $true ) `
+	{ `
+		$global:shpFile = "\vDiagram_" + $MyVer + ".vssx"
+	}
+	else `
+	{ `
+		$global:shpFile = "\vDiagram_" + $MyVer + "_VVD" + ".vssx"
+	}
+}
+#endregion ~~< Shapefile Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #region ~~< Visio Object Functions >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -8342,7 +8428,7 @@ function CSV_In_Out
 #region ~~< Visio_Shapes >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function Visio_Shapes
 {
-	$stnPath = [System.Environment]::GetFolderPath('MyDocuments') + "\My Shapes"
+    $stnPath = [System.Environment]::GetFolderPath('MyDocuments') + "\My Shapes"
 	$stnObj = $AppVisio.Documents.Add($stnPath + $shpFile)
 	# vCenter Object
 	$global:VCObj = $stnObj.Masters.Item("Virtual Center Management Console")
@@ -8469,7 +8555,7 @@ function vCenter_to_LinkedvCenter
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 	
-	ForEach ( $LinkedvCenter in ( $LinkedvCenterImport | Sort-Object Name ) )
+	foreach ( $LinkedvCenter in ( $LinkedvCenterImport | Sort-Object Name ) )
 	{
 		$x += 2.50
 		$LinkedvCenterObject = Add-VisioObjectVC $VCObj $LinkedvCenter
@@ -8558,7 +8644,7 @@ function VM_to_Host
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 	
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -8577,7 +8663,7 @@ function VM_to_Host
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -8596,7 +8682,7 @@ function VM_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -8616,7 +8702,7 @@ function VM_to_Host
 				Connect-VisioObject $ClusterObject $HostObject
 				$y += 1.50
 				
-				ForEach ( $VM in ( $VmImport | Where-Object { $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+				foreach ( $VM in ( $VmImport | Where-Object { $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS -eq "" ) `
@@ -8674,7 +8760,7 @@ function VM_to_Host
 					$HostObject = $VMObject
 				}
 				
-				ForEach ( $Template in ( $TemplateImport | Where-Object { $VmHost.TemplateId.contains( $_.MoRef ) -and $VmHost.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+				foreach ( $Template in ( $TemplateImport | Where-Object { $VmHost.TemplateId.contains( $_.MoRef ) -and $VmHost.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -8695,7 +8781,7 @@ function VM_to_Host
 				}
 			}
 		}
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -8715,7 +8801,7 @@ function VM_to_Host
 			Connect-VisioObject $DatacenterObject $HostObject
 			$y += 1.50
 			
-			ForEach ( $VM in ( $VmImport | Where-Object { $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+			foreach ( $VM in ( $VmImport | Where-Object { $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 			{ `
 				$x += 2.50
 				if ( $VM.OS -eq "" ) `
@@ -8772,7 +8858,7 @@ function VM_to_Host
 				Connect-VisioObject $HostObject $VMObject
 				$HostObject = $VMObject
 			}
-			ForEach ( $Template in ( $TemplateImport | Where-Object { $VmHost.TemplateId.contains( $_.MoRef ) -and $VmHost.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+			foreach ( $Template in ( $TemplateImport | Where-Object { $VmHost.TemplateId.contains( $_.MoRef ) -and $VmHost.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 			{ `
 				$x += 2.50
 				$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -8861,7 +8947,7 @@ function VM_to_Folder
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 	
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -8881,7 +8967,7 @@ function VM_to_Folder
 		Connect-VisioObject $VCObject $DatacenterObject
 		$y += 1.50
 		
-		ForEach ( $Folder in ( $FolderImport | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.Datacenter -eq ( $Datacenter.Name ) } | Sort-Object Parent, Name -Descending ) ) `
+		foreach ( $Folder in ( $FolderImport | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.Datacenter -eq ( $Datacenter.Name ) } | Sort-Object Parent, Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			
@@ -8902,7 +8988,7 @@ function VM_to_Folder
 				}
 				Connect-VisioObject $DatacenterObject $FolderObject
 				
-				ForEach ( $SubFolder in ( $FolderImport | Where-Object { $_.Parent -notlike "vm" -and $_.ParentId -like $Folder.MoRef } | Sort-Object Name -Descending ) ) `
+				foreach ( $SubFolder in ( $FolderImport | Where-Object { $_.Parent -notlike "vm" -and $_.ParentId -like $Folder.MoRef } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 7.50
 					$y += 1.50
@@ -8921,7 +9007,7 @@ function VM_to_Folder
 					}
 					Connect-VisioObject $FolderObject $SubFolderObject
 					
-					ForEach ( $SubSubFolder in ( $FolderImport | Where-Object { $_.ParentId -like $SubFolder.MoRef } | Sort-Object Name -Descending ) ) `
+					foreach ( $SubSubFolder in ( $FolderImport | Where-Object { $_.ParentId -like $SubFolder.MoRef } | Sort-Object Name -Descending ) ) `
 					{ `
 						$x = 10.00
 						$y += 1.50
@@ -8940,7 +9026,7 @@ function VM_to_Folder
 						}
 						Connect-VisioObject $SubFolderObject $SubSubFolderObject
 						
-						ForEach ( $SubSubSubFolder in ( $FolderImport | Where-Object { $_.ParentId -like $SubSubFolder.MoRef } | Sort-Object Name -Descending ) ) `
+						foreach ( $SubSubSubFolder in ( $FolderImport | Where-Object { $_.ParentId -like $SubSubFolder.MoRef } | Sort-Object Name -Descending ) ) `
 						{ `
 							$x = 12.50
 							$y += 1.50
@@ -8960,7 +9046,7 @@ function VM_to_Folder
 							Connect-VisioObject $SubSubFolderObject $SubSubSubFolderObject
 							$y += 1.50
 							
-							ForEach ( $Template in ( $TemplateImport | Where-Object { $SubSubSubFolder.TemplateId.contains( $_.MoRef ) -and $SubSubSubFolder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+							foreach ( $Template in ( $TemplateImport | Where-Object { $SubSubSubFolder.TemplateId.contains( $_.MoRef ) -and $SubSubSubFolder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 							{ `
 								$x += 2.50
 								$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -8974,7 +9060,7 @@ function VM_to_Folder
 								$SubSubSubFolderObject = $TemplateObject
 							}
 										
-							ForEach ( $VM in ( $VmImport | Where-Object { $SubSubSubFolder.VmId.contains( $_.MoRef ) -and $SubSubSubFolder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+							foreach ( $VM in ( $VmImport | Where-Object { $SubSubSubFolder.VmId.contains( $_.MoRef ) -and $SubSubSubFolder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 							{ `
 								$x += 2.50
 								if ( $VM.OS -eq "" ) `
@@ -9034,7 +9120,7 @@ function VM_to_Folder
 						}
 						$y += 1.50
 						
-						ForEach ( $Template in ( $TemplateImport | Where-Object { $SubSubFolder.TemplateId.contains( $_.MoRef ) -and $SubSubFolder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+						foreach ( $Template in ( $TemplateImport | Where-Object { $SubSubFolder.TemplateId.contains( $_.MoRef ) -and $SubSubFolder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 						{ `
 							$x += 2.50
 							$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -9054,7 +9140,7 @@ function VM_to_Folder
 							$SubSubFolderObject = $TemplateObject
 						}
 									
-						ForEach ( $VM in ( $VmImport | Where-Object { $SubSubFolder.VmId.contains( $_.MoRef ) -and $SubSubFolder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+						foreach ( $VM in ( $VmImport | Where-Object { $SubSubFolder.VmId.contains( $_.MoRef ) -and $SubSubFolder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 						{ `
 							$x += 2.50
 							if ( $VM.OS -eq "" ) `
@@ -9114,7 +9200,7 @@ function VM_to_Folder
 					}
 					$y += 1.50
 					
-					ForEach ( $Template in ( $TemplateImport | Where-Object { $SubFolder.TemplateId.contains( $_.MoRef ) -and $SubFolder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+					foreach ( $Template in ( $TemplateImport | Where-Object { $SubFolder.TemplateId.contains( $_.MoRef ) -and $SubFolder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -9134,7 +9220,7 @@ function VM_to_Folder
 						$SubFolderObject = $TemplateObject
 					}
 								
-					ForEach ( $VM in ( $VmImport | Where-Object { $SubFolder.VmId.contains( $_.MoRef ) -and $SubFolder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+					foreach ( $VM in ( $VmImport | Where-Object { $SubFolder.VmId.contains( $_.MoRef ) -and $SubFolder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						if ( $VM.OS -eq "" ) `
@@ -9195,7 +9281,7 @@ function VM_to_Folder
 				
 				$x = 5.00
 				$y += 1.50
-				ForEach ( $Template in ( $TemplateImport | Where-Object { $Folder.TemplateId.contains( $_.MoRef ) -and $Folder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+				foreach ( $Template in ( $TemplateImport | Where-Object { $Folder.TemplateId.contains( $_.MoRef ) -and $Folder.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -9215,7 +9301,7 @@ function VM_to_Folder
 					$FolderObject = $TemplateObject
 				}
 							
-				ForEach ( $VM in ( $VmImport | Where-Object { $Folder.VmId.contains( $_.MoRef ) -and $Folder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+				foreach ( $VM in ( $VmImport | Where-Object { $Folder.VmId.contains( $_.MoRef ) -and $Folder.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS -eq "" ) `
@@ -9276,13 +9362,13 @@ function VM_to_Folder
 			}
 		}
 		
-		ForEach ( $Folder in ( $FolderImport | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.Datacenter -eq ( $Datacenter.Name ) } | Sort-Object Parent, Name -Descending ) ) `
+		foreach ( $Folder in ( $FolderImport | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.Datacenter -eq ( $Datacenter.Name ) } | Sort-Object Parent, Name -Descending ) ) `
 		{ `
 			$x = 2.50
 			
 			if  ( $Folder.Name -eq "vm" ) `
 			{ `
-				ForEach ( $Template in ( $TemplateImport | Where-Object { $Datacenter.TemplateId.contains( $_.MoRef ) -and $Datacenter.Template.contains( $_.Name ) -and $_.Folder -eq "vm" } | Sort-Object Name ) ) `
+				foreach ( $Template in ( $TemplateImport | Where-Object { $Datacenter.TemplateId.contains( $_.MoRef ) -and $Datacenter.Template.contains( $_.Name ) -and $_.Folder -eq "vm" } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -9302,7 +9388,7 @@ function VM_to_Folder
 					$DatacenterObject = $TemplateObject
 				}
 			
-				ForEach ( $VM in ( $VmImport | Where-Object { ( $Datacenter.VmId.contains( $_.MoRef ) -and $Datacenter.Vm.contains( $_.Name ) -and$_.SRM.contains("placeholderVm") -eq $False ) -and $_.Folder -eq "vm" } | Sort-Object Name ) ) `
+				foreach ( $VM in ( $VmImport | Where-Object { ( $Datacenter.VmId.contains( $_.MoRef ) -and $Datacenter.Vm.contains( $_.Name ) -and$_.SRM.contains("placeholderVm") -eq $False ) -and $_.Folder -eq "vm" } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS -eq "" ) `
@@ -9430,7 +9516,7 @@ function VMs_with_RDMs
 		Write-Host "[$DateTime] Drawing vCenter - " $vCenterImport.Name
 	}
 	
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -9449,7 +9535,7 @@ function VMs_with_RDMs
 		}		
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -9468,7 +9554,7 @@ function VMs_with_RDMs
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VM in ( $VmImport | Where-Object { $Cluster.VmId.contains( $_.MoRef ) -and $Cluster.Vm.contains( $_.Name ) -and $RdmImport.VmId -eq ( $_.MoRef ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $VM in ( $VmImport | Where-Object { $Cluster.VmId.contains( $_.MoRef ) -and $Cluster.Vm.contains( $_.Name ) -and $RdmImport.VmId -eq ( $_.MoRef ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -9526,7 +9612,7 @@ function VMs_with_RDMs
 				Connect-VisioObject $ClusterObject $VMObject
 				$y += 1.50
 				
-				ForEach ( $HardDisk in ( $RdmImport | Sort-Object Label | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.ClusterId -eq ( $Cluster.MoRef ) -and $_.VmId -eq ( $Vm.MoRef ) } ) ) `
+				foreach ( $HardDisk in ( $RdmImport | Sort-Object Label | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.ClusterId -eq ( $Cluster.MoRef ) -and $_.VmId -eq ( $Vm.MoRef ) } ) ) `
 				{ `
 					$x += 2.50
 					$RDMObject = Add-VisioObjectHardDisk $RDMObj $HardDisk
@@ -9547,7 +9633,7 @@ function VMs_with_RDMs
 				}
 			}		
 		}	
-		ForEach ( $VM in ( $VmImport | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.ClusterId -eq "" -and $RdmImport.VmId -eq ( $_.MoRef ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $VM in ( $VmImport | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.ClusterId -eq "" -and $RdmImport.VmId -eq ( $_.MoRef ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -9605,7 +9691,7 @@ function VMs_with_RDMs
 			Connect-VisioObject $DatacenterObject $VMObject
 			$y += 1.50
 			
-			ForEach ( $HardDisk in ( $RdmImport | Sort-Object Label | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.VmId -eq ( $Vm.MoRef ) } ) ) `
+			foreach ( $HardDisk in ( $RdmImport | Sort-Object Label | Where-Object { $_.DatacenterId -eq ( $Datacenter.MoRef ) -and $_.VmId -eq ( $Vm.MoRef ) } ) ) `
 			{ `
 				$x += 2.50
 				$RDMObject = Add-VisioObjectHardDisk $RDMObj $HardDisk
@@ -9694,7 +9780,7 @@ function SRM_Protected_VMs
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 	
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -9714,7 +9800,7 @@ function SRM_Protected_VMs
 		Connect-VisioObject $VCObject $DatacenterObject
 		$y += 1.50
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -9733,7 +9819,7 @@ function SRM_Protected_VMs
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) ) `
+			foreach ( $VmHost in ( ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -9753,7 +9839,7 @@ function SRM_Protected_VMs
 				Connect-VisioObject $ClusterObject $HostObject
 				$y += 1.50
 				
-				ForEach ( $SrmVM in ( $VmImport | Where-Object { $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and $_.SRM.contains("placeholderVm") } | Sort-Object Name ) ) `
+				foreach ( $SrmVM in ( $VmImport | Where-Object { $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and $_.SRM.contains("placeholderVm") } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$SrmObject = Add-VisioObjectSRM $SRMObj $SrmVM
@@ -9775,7 +9861,7 @@ function SRM_Protected_VMs
 			}
 		}
 		
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -9795,7 +9881,7 @@ function SRM_Protected_VMs
 			Connect-VisioObject $DatacenterObject $HostObject
 			$y += 1.50
 			
-			ForEach ( $SrmVM in ( $VmImport | Where-Object { $_.ClusterId -eq "" -and $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and $_.SRM.contains("placeholderVm") } | Sort-Object Name -Descending ) ) `
+			foreach ( $SrmVM in ( $VmImport | Where-Object { $_.ClusterId -eq "" -and $VmHost.VmId.contains( $_.MoRef ) -and $VmHost.Vm.contains( $_.Name ) -and $_.SRM.contains("placeholderVm") } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x += 2.50
 				$SrmObject = Add-VisioObjectSRM $SRMObj $SrmVM
@@ -9888,7 +9974,7 @@ function VM_to_Datastore
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}		
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -9907,7 +9993,7 @@ function VM_to_Datastore
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -9926,7 +10012,7 @@ function VM_to_Datastore
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $DatastoreCluster in ( $DatastoreClusterImport | Where-Object { $Cluster.DatastoreClusterId.contains( $_.MoRef ) -and $Cluster.DatastoreCluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $DatastoreCluster in ( $DatastoreClusterImport | Where-Object { $Cluster.DatastoreClusterId.contains( $_.MoRef ) -and $Cluster.DatastoreCluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -9945,7 +10031,7 @@ function VM_to_Datastore
 				}
 				Connect-VisioObject $ClusterObject $DatastoreClusObject
 				
-				ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $DatastoreCluster.DatastoreId.contains( $_.MoRef ) -and $DatastoreCluster.Datastore.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $Datastore in ( $DatastoreImport | Where-Object { $DatastoreCluster.DatastoreId.contains( $_.MoRef ) -and $DatastoreCluster.Datastore.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -9965,7 +10051,7 @@ function VM_to_Datastore
 					Connect-VisioObject $DatastoreClusObject $DatastoreObject
 					$y += 1.50
 					
-					ForEach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $Cluster.VmId.contains( $_.MoRef ) -and $Cluster.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+					foreach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $Cluster.VmId.contains( $_.MoRef ) -and $Cluster.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						if ( $VM.OS.contains("Microsoft") -eq $True ) `
@@ -10022,7 +10108,7 @@ function VM_to_Datastore
 						Connect-VisioObject $DatastoreObject $VMObject
 						$DatastoreObject = $VMObject
 					}
-					ForEach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) -and $Cluster.TemplateId.contains( $_.MoRef ) -and $Cluster.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+					foreach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) -and $Cluster.TemplateId.contains( $_.MoRef ) -and $Cluster.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -10043,7 +10129,7 @@ function VM_to_Datastore
 					}
 				}
 			}
-			ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $Cluster.DatastoreId.contains( $_.MoRef ) -and $Cluster.Datastore.contains( $_.Name ) -and $_.DatastoreClusterId -like "" } | Sort-Object Name -Descending ) ) `
+			foreach ( $Datastore in ( $DatastoreImport | Where-Object { $Cluster.DatastoreId.contains( $_.MoRef ) -and $Cluster.Datastore.contains( $_.Name ) -and $_.DatastoreClusterId -like "" } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -10063,7 +10149,7 @@ function VM_to_Datastore
 				Connect-VisioObject $ClusterObject $DatastoreObject
 				$y += 1.50
 				
-				ForEach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $Cluster.VmId.contains( $_.MoRef ) -and $Cluster.Vm.contains( $_.Name ) -and( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+				foreach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $Cluster.VmId.contains( $_.MoRef ) -and $Cluster.Vm.contains( $_.Name ) -and( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS.contains("Microsoft") -eq $True ) `
@@ -10120,7 +10206,7 @@ function VM_to_Datastore
 					Connect-VisioObject $DatastoreObject $VMObject
 					$DatastoreObject = $VMObject
 				}
-				ForEach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) -and $Cluster.TemplateId.contains( $_.MoRef ) -and $Cluster.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
+				foreach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) -and $Cluster.TemplateId.contains( $_.MoRef ) -and $Cluster.Template.contains( $_.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -10141,7 +10227,7 @@ function VM_to_Datastore
 				}
 			}
 		}
-		ForEach ( $DatastoreCluster in ( $DatastoreClusterImport | Where-Object { $Datacenter.DatastoreClusterId.contains( $_.MoRef ) -and $Datacenter.DatastoreCluster.contains( $_.Name ) -and $_.ClusterId -like "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $DatastoreCluster in ( $DatastoreClusterImport | Where-Object { $Datacenter.DatastoreClusterId.contains( $_.MoRef ) -and $Datacenter.DatastoreCluster.contains( $_.Name ) -and $_.ClusterId -like "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -10160,7 +10246,7 @@ function VM_to_Datastore
 			}
 			Connect-VisioObject $DatacenterObject $DatastoreClusObject
 			
-			ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $DatastoreCluster.DatastoreId.contains( $_.MoRef ) -and $DatastoreCluster.Datastore.contains( $_.Name ) -and $_.ClusterId -like "" } | Sort-Object Name -Descending ) ) `
+			foreach ( $Datastore in ( $DatastoreImport | Where-Object { $DatastoreCluster.DatastoreId.contains( $_.MoRef ) -and $DatastoreCluster.Datastore.contains( $_.Name ) -and $_.ClusterId -like "" } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -10180,7 +10266,7 @@ function VM_to_Datastore
 				Connect-VisioObject $DatastoreClusObject $DatastoreObject
 				$y += 1.50
 				
-				ForEach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $_._ClusterId -like "" -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+				foreach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $_._ClusterId -like "" -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS.contains("Microsoft") -eq $True ) `
@@ -10237,7 +10323,7 @@ function VM_to_Datastore
 					Connect-VisioObject $HostObject $VMObject
 					$HostObject = $VMObject
 				}
-				ForEach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) } -and $_._ClusterId -like "" | Sort-Object Name ) ) `
+				foreach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) } -and $_._ClusterId -like "" | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -10258,7 +10344,7 @@ function VM_to_Datastore
 				}
 			}
 		}
-		ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $Datacenter.DatastoreId.contains( $_.MoRef ) -and $Datacenter.Datastore.contains( $_.Name ) -and $_.ClusterId -like "" -and $_.DatastoreClusterId -like "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $Datastore in ( $DatastoreImport | Where-Object { $Datacenter.DatastoreId.contains( $_.MoRef ) -and $Datacenter.Datastore.contains( $_.Name ) -and $_.ClusterId -like "" -and $_.DatastoreClusterId -like "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -10278,7 +10364,7 @@ function VM_to_Datastore
 			Connect-VisioObject $DatacenterObject $DatastoreObject
 			$y += 1.50
 			
-			ForEach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $_.ClusterId -like "" -and $_.DatastoreClusterId -like "" -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+			foreach ( $VM in ( $VmImport | Where-Object { $Datastore.VmId.contains( $_.MoRef ) -and $Datastore.Vm.contains( $_.Name ) -and $_.ClusterId -like "" -and $_.DatastoreClusterId -like "" -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 			{ `
 				$x += 2.50
 				if ( $VM.OS.contains("Microsoft") -eq $True ) `
@@ -10335,7 +10421,7 @@ function VM_to_Datastore
 				Connect-VisioObject $DatastoreObject $VMObject
 				$DatastoreObject = $VMObject
 			}
-			ForEach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) -and $_.ClusterId -like "" -and $_.DatastoreClusterId -like "" } | Sort-Object Name ) ) `
+			foreach ( $Template in ( $TemplateImport | Where-Object { $Datastore.TemplateId.contains( $_.MoRef ) -and $Datastore.Template.contains( $_.Name ) -and $_.ClusterId -like "" -and $_.DatastoreClusterId -like "" } | Sort-Object Name ) ) `
 			{ `
 				$x += 2.50
 				$TemplateObject = Add-VisioObjectTemplate $TemplateObj $Template
@@ -10425,7 +10511,7 @@ function VM_to_ResourcePool
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending  ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending  ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -10444,7 +10530,7 @@ function VM_to_ResourcePool
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -10465,7 +10551,7 @@ function VM_to_ResourcePool
 			
 			$RootResoucePool = ( $ResourcePoolImport | Where-Object { $_.Name -like "Resources" -and $_.ClusterId -like ( $Cluster.MoRef ) } ).MoRef
 			
-			ForEach ( $ResourcePool in ( $ResourcePoolImport | Where-Object { $Cluster.ResourcePoolId.contains( $_.MoRef ) -and $Cluster.ResourcePool.contains( $_.Name ) -and $_.ClusterId -notlike $_.Parent } | Sort-Object Name -Descending ) ) `
+			foreach ( $ResourcePool in ( $ResourcePoolImport | Where-Object { $Cluster.ResourcePoolId.contains( $_.MoRef ) -and $Cluster.ResourcePool.contains( $_.Name ) -and $_.ClusterId -notlike $_.Parent } | Sort-Object Name -Descending ) ) `
 			{ `
 				if ( $ResourcePool.Parent -like ("$RootResoucePool") ) `
 				{ `
@@ -10487,7 +10573,7 @@ function VM_to_ResourcePool
 					Connect-VisioObject $ClusterObject $ResourcePoolObject
 					$ResourcePoolMoRef = $ResourcePool.MoRef
 					
-					ForEach ( $SubResourcePool in ( $ResourcePoolImport | Where-Object { $Cluster.ResourcePoolId.contains( $_.MoRef ) -and $Cluster.ResourcePool.contains( $_.Name ) -and ( $_.Parent -like ( $ResourcePool.MoRef ) ) } | Sort-Object Name -Descending ) ) `
+					foreach ( $SubResourcePool in ( $ResourcePoolImport | Where-Object { $Cluster.ResourcePoolId.contains( $_.MoRef ) -and $Cluster.ResourcePool.contains( $_.Name ) -and ( $_.Parent -like ( $ResourcePool.MoRef ) ) } | Sort-Object Name -Descending ) ) `
 					{ `
 						if ( $SubResourcePool.Parent.contains("$ResourcePoolMoRef") -eq $True ) `
 						{ `
@@ -10509,7 +10595,7 @@ function VM_to_ResourcePool
 							Connect-VisioObject $ResourcePoolObject $SubResourcePoolObject
 							$SubResourcePoolMoRef = $SubResourcePool.MoRef
 			
-							ForEach ( $SubSubResourcePool in ( $ResourcePoolImport | Where-Object { $Cluster.ResourcePoolId.contains( $_.MoRef ) -and $Cluster.ResourcePool.contains( $_.Name ) -and ( $_.Parent -like ( $SubResourcePool.MoRef ) ) } | Sort-Object Name -Descending ) ) `
+							foreach ( $SubSubResourcePool in ( $ResourcePoolImport | Where-Object { $Cluster.ResourcePoolId.contains( $_.MoRef ) -and $Cluster.ResourcePool.contains( $_.Name ) -and ( $_.Parent -like ( $SubResourcePool.MoRef ) ) } | Sort-Object Name -Descending ) ) `
 							{ `
 								if ( $SubSubResourcePool.Parent.contains("$SubResourcePoolMoRef") -eq $True ) `
 								{ `
@@ -10532,7 +10618,7 @@ function VM_to_ResourcePool
 									#$SubSubResourcePoolMoRef = $SubSubResourcePool.MoRef
 									$y += 1.50
 								
-									ForEach ( $VM in ( $VmImport | Where-Object { $SubSubResourcePool.VmId.contains( $_.MoRef ) -and $SubSubResourcePool.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+									foreach ( $VM in ( $VmImport | Where-Object { $SubSubResourcePool.VmId.contains( $_.MoRef ) -and $SubSubResourcePool.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 									{ `
 										$x += 2.50
 										if ( $VM.OS.contains("Microsoft") -eq $True ) `
@@ -10594,7 +10680,7 @@ function VM_to_ResourcePool
 							
 							$x = 10.00
 							$y = ( $y + 1.50 )
-							ForEach ( $VM in ( $VmImport | Where-Object { $SubResourcePool.VmId.contains( $_.MoRef ) -and $SubResourcePool.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+							foreach ( $VM in ( $VmImport | Where-Object { $SubResourcePool.VmId.contains( $_.MoRef ) -and $SubResourcePool.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 							{ `
 								$x += 2.50
 								if ( $VM.OS.contains("Microsoft") -eq $True ) `
@@ -10657,7 +10743,7 @@ function VM_to_ResourcePool
 					$x = 7.50
 					$y = ( $y + 1.50 )
 					
-					ForEach ( $VM in ( $VmImport | Where-Object { $ResourcePool.VmId.contains( $_.MoRef ) -and $ResourcePool.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+					foreach ( $VM in ( $VmImport | Where-Object { $ResourcePool.VmId.contains( $_.MoRef ) -and $ResourcePool.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						if ( $VM.OS.contains("Microsoft") -eq $True ) `
@@ -10786,7 +10872,7 @@ function Datastore_to_Host
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -10805,7 +10891,7 @@ function Datastore_to_Host
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -10824,7 +10910,7 @@ function Datastore_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -10844,7 +10930,7 @@ function Datastore_to_Host
 				Connect-VisioObject $ClusterObject $HostObject
 				$y += 1.50	
 				
-				ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $VmHost.DatastoreId.contains( $_.MoRef ) -and $VmHost.Datastore.contains( $_.Name ) } | Sort-Object Name ) ) `
+				foreach ( $Datastore in ( $DatastoreImport | Where-Object { $VmHost.DatastoreId.contains( $_.MoRef ) -and $VmHost.Datastore.contains( $_.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$DatastoreObject = Add-VisioObjectDatastore $DatastoreObj $Datastore
@@ -10865,7 +10951,7 @@ function Datastore_to_Host
 				}
 			}
 		}
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -10885,7 +10971,7 @@ function Datastore_to_Host
 			Connect-VisioObject $DatacenterObject $HostObject
 			$y += 1.50
 
-			ForEach ( $Datastore in ( $DatastoreImport | Where-Object { $VmHost.DatastoreId.contains( $_.MoRef ) -and $VmHost.Datastore.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+			foreach ( $Datastore in ( $DatastoreImport | Where-Object { $VmHost.DatastoreId.contains( $_.MoRef ) -and $VmHost.Datastore.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x += 2.50
 				$DatastoreObject = Add-VisioObjectDatastore $DatastoreObj $Datastore
@@ -10972,7 +11058,7 @@ function Snapshot_to_VM
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 	
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -10991,7 +11077,7 @@ function Snapshot_to_VM
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $VM in( $VmImport | Where-Object { $Datacenter.VmId.contains( $_.MoRef ) -and $Datacenter.Vm.contains( $_.Name ) -and ( $_.Snapshot -notlike "" ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $VM in( $VmImport | Where-Object { $Datacenter.VmId.contains( $_.MoRef ) -and $Datacenter.Vm.contains( $_.Name ) -and ( $_.Snapshot -notlike "" ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -11048,7 +11134,7 @@ function Snapshot_to_VM
 			}
 			Connect-VisioObject $DatacenterObject $VMObject
 			
-			ForEach ( $ParentSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ( $_.ParentSnapshot -like $null ) } ) ) `
+			foreach ( $ParentSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ( $_.ParentSnapshot -like $null ) } ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11086,7 +11172,7 @@ function Snapshot_to_VM
 				}
 				Connect-VisioObject $VMObject $ParentSnapshotObject 
 				
-				ForEach ( $ChildSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ( $_.ParentSnapshot -like $ParentSnapshot.Name ) } ) ) `
+				foreach ( $ChildSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ( $_.ParentSnapshot -like $ParentSnapshot.Name ) } ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -11124,7 +11210,7 @@ function Snapshot_to_VM
 					}
 					Connect-VisioObject $ParentSnapshotObject $ChildSnapshotObject
 					
-					ForEach ( $ChildChildSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ( $_.ParentSnapshot -like $ChildSnapshot.Name ) } ) ) `
+					foreach ( $ChildChildSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ( $_.ParentSnapshot -like $ChildSnapshot.Name ) } ) ) `
 					{ `
 						$x = 12.50
 						$y += 1.50
@@ -11163,7 +11249,7 @@ function Snapshot_to_VM
 						Connect-VisioObject $ChildSnapshotObject $ChildChildSnapshotObject
 						$y += 1.50
 						
-						ForEach ( $ChildChildChildSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ($_.ParentSnapshot -like $ChildChildSnapshot.Name ) } ) ) `
+						foreach ( $ChildChildChildSnapshot in ( $SnapshotImport | Sort-Object Created | Where-Object { $_.VM.contains( $VM.Name ) -and $_.VMId.contains( $VM.MoRef) -and ($_.ParentSnapshot -like $ChildChildSnapshot.Name ) } ) ) `
 						{ `
 							$x += 2.50
 							$y += 1.50
@@ -11279,7 +11365,7 @@ function PhysicalNIC_to_vSwitch
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -11298,7 +11384,7 @@ function PhysicalNIC_to_vSwitch
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -11318,7 +11404,7 @@ function PhysicalNIC_to_vSwitch
 			$ClusterObject.Cells("Prop.HostMonitoring").Formula = '"' + $Cluster.HostMonitoring + '"'
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11337,7 +11423,7 @@ function PhysicalNIC_to_vSwitch
 				}
 				Connect-VisioObject $ClusterObject $HostObject
 				
-				ForEach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -11359,7 +11445,7 @@ function PhysicalNIC_to_vSwitch
 					
 					if ( $null -ne $VssPnicImport ) `
 					{ `
-						ForEach ( $VssPnic in ( $VssPnicImport | Where-Object { $VsSwitch.NicId.contains( $_.MoRef ) -and $VsSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+						foreach ( $VssPnic in ( $VssPnicImport | Where-Object { $VsSwitch.NicId.contains( $_.MoRef ) -and $VsSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 						{ `
 							$x += 2.50
 							$VssPNICObject = Add-VisioObjectVssPNIC $VssPNICObj $VssPnic
@@ -11381,7 +11467,7 @@ function PhysicalNIC_to_vSwitch
 					}
 				}
 				
-				ForEach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -11401,7 +11487,7 @@ function PhysicalNIC_to_vSwitch
 					Connect-VisioObject $HostObject $VdSwitchObject
 					$y += 1.50
 					
-					ForEach ( $VdsPnic in ( $VdsPnicImport | Where-Object { $VdSwitch.NicId.contains( $_.MoRef ) -and $VdSwitch.Nic.contains( $_.Name )-and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+					foreach ( $VdsPnic in ( $VdsPnicImport | Where-Object { $VdSwitch.NicId.contains( $_.MoRef ) -and $VdSwitch.Nic.contains( $_.Name )-and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						$VdsPNICObject = Add-VisioObjectVdsPNIC $VdsPNICObj $VdsPnic
@@ -11424,7 +11510,7 @@ function PhysicalNIC_to_vSwitch
 			}
 		}
 		
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -11443,7 +11529,7 @@ function PhysicalNIC_to_vSwitch
 			}
 			Connect-VisioObject $DatacenterObject $HostObject
 			
-			ForEach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $VmHost.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $VmHost.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11465,7 +11551,7 @@ function PhysicalNIC_to_vSwitch
 				
 				if ( $null -ne $VssPnicImport ) `
 				{ `
-					ForEach ( $VssPnic in ( $VssPnicImport | Where-Object { $VsSwitch.NicId.contains( $_.MoRef ) -and $VsSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+					foreach ( $VssPnic in ( $VssPnicImport | Where-Object { $VsSwitch.NicId.contains( $_.MoRef ) -and $VsSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						$VssPNICObject = Add-VisioObjectVssPNIC $VssPNICObj $VssPnic
@@ -11487,7 +11573,7 @@ function PhysicalNIC_to_vSwitch
 				}
 			}
 			
-			ForEach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $VmHost.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $VmHost.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11507,7 +11593,7 @@ function PhysicalNIC_to_vSwitch
 				Connect-VisioObject $HostObject $VdSwitchObject
 				$y += 1.50
 				
-				ForEach ( $VdsPnic in ( $VdsPnicImport | Where-Object { $VdSwitch.NicId.contains( $_.MoRef ) -and $VdSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+				foreach ( $VdsPnic in ( $VdsPnicImport | Where-Object { $VdSwitch.NicId.contains( $_.MoRef ) -and $VdSwitch.Nic.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$VdsPNICObject = Add-VisioObjectVdsPNIC $VdsPNICObj $VdsPnic
@@ -11599,7 +11685,7 @@ function VSS_to_Host
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -11618,7 +11704,7 @@ function VSS_to_Host
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -11637,7 +11723,7 @@ function VSS_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11656,7 +11742,7 @@ function VSS_to_Host
 				}
 				Connect-VisioObject $ClusterObject $HostObject
 				
-				ForEach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -11676,7 +11762,7 @@ function VSS_to_Host
 					Connect-VisioObject $HostObject $VsSwitchObject
 					$y += 1.50
 					
-					ForEach ( $VssPort in ( $VssPortImport | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+					foreach ( $VssPort in ( $VssPortImport | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						$VssPortObject = Add-VisioObjectVssPG $VssPortGroupObj $VssPort
@@ -11699,7 +11785,7 @@ function VSS_to_Host
 			}
 		}
 		
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -11718,7 +11804,7 @@ function VSS_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $HostObject
 			
-			ForEach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11738,7 +11824,7 @@ function VSS_to_Host
 				Connect-VisioObject $HostObject $VsSwitchObject
 				$y += 1.50
 				
-				ForEach ( $VssPort in ( $VssPortImport | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+				foreach ( $VssPort in ( $VssPortImport | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$VssPortObject = Add-VisioObjectVssPG $VssPortGroupObj $VssPort
@@ -11830,7 +11916,7 @@ function VMK_to_VSS
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -11849,7 +11935,7 @@ function VMK_to_VSS
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -11868,7 +11954,7 @@ function VMK_to_VSS
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11887,7 +11973,7 @@ function VMK_to_VSS
 				}
 				Connect-VisioObject $ClusterObject $HostObject
 				
-				ForEach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -11907,7 +11993,7 @@ function VMK_to_VSS
 					Connect-VisioObject $HostObject $VsSwitchObject
 					$y += 1.50
 					
-					ForEach ( $VssVmk in ( $VssVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VsSwitch.MoRef ) -and $_.VSwitch.contains( $VsSwitch.Name ) } ) ) `
+					foreach ( $VssVmk in ( $VssVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VsSwitch.MoRef ) -and $_.VSwitch.contains( $VsSwitch.Name ) } ) ) `
 					{ `
 						$x += 2.50
 						$VssVmkNicObject = Add-VisioObjectVMK $VssVmkNicObj $VssVmk
@@ -11930,7 +12016,7 @@ function VMK_to_VSS
 			}
 		}
 
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" }  | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" }  | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -11949,7 +12035,7 @@ function VMK_to_VSS
 			}
 			Connect-VisioObject $DatacenterObject $HostObject
 			
-			ForEach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+			foreach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -11969,7 +12055,7 @@ function VMK_to_VSS
 				Connect-VisioObject $HostObject $VsSwitchObject
 				$y += 1.50
 				
-				ForEach ( $VssVmk in ( $VssVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VsSwitch.MoRef ) -and $_.VSwitch.contains( $VsSwitch.Name ) -and $_.ClusterId -eq "" } ) ) `
+				foreach ( $VssVmk in ( $VssVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VsSwitch.MoRef ) -and $_.VSwitch.contains( $VsSwitch.Name ) -and $_.ClusterId -eq "" } ) ) `
 				{ `
 					$x += 1.50
 					$VssVmkNicObject = Add-VisioObjectVMK $VssVmkNicObj $VssVmk
@@ -12064,7 +12150,7 @@ function VSSPortGroup_to_VM
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -12083,7 +12169,7 @@ function VSSPortGroup_to_VM
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -12102,7 +12188,7 @@ function VSSPortGroup_to_VM
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12121,7 +12207,7 @@ function VSSPortGroup_to_VM
 				}
 				Connect-VisioObject $ClusterObject $HostObject
 				
-				ForEach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $VsSwitch in ( $VsSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -12140,7 +12226,7 @@ function VSSPortGroup_to_VM
 					}
 					Connect-VisioObject $HostObject $VsSwitchObject
 					
-					ForEach ( $VssPort in ( $VssPortImport | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+					foreach ( $VssPort in ( $VssPortImport | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 					{ `
 						$x = 12.50
 						$y += 1.50
@@ -12160,7 +12246,7 @@ function VSSPortGroup_to_VM
 						Connect-VisioObject $VsSwitchObject $VssPortObject
 						$y += 1.50
 						
-						ForEach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $VssPort.VmId.contains( $_.MoRef ) -and $VssPort.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
+						foreach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $VssPort.VmId.contains( $_.MoRef ) -and $VssPort.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } | Sort-Object Name ) ) `
 						{ `
 							$x += 2.50
 							if ( $VM.OS -eq "" ) `
@@ -12221,7 +12307,7 @@ function VSSPortGroup_to_VM
 				}
 			}
 		}
-		ForEach ( $VmHost in ( $VmHostImport | Sort-Object Name | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Sort-Object Name | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -12240,7 +12326,7 @@ function VSSPortGroup_to_VM
 			}
 			Connect-VisioObject $DatacenterObject $HostObject
 			
-			ForEach ( $VsSwitch in ( $VsSwitchImport | Sort-Object Name | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+			foreach ( $VsSwitch in ( $VsSwitchImport | Sort-Object Name | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12259,7 +12345,7 @@ function VSSPortGroup_to_VM
 				}
 				Connect-VisioObject $HostObject $VsSwitchObject
 				
-				ForEach ( $VssPort in ( $VssPortImport | Sort-Object Name | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+				foreach ( $VssPort in ( $VssPortImport | Sort-Object Name | Where-Object { $VsSwitch.PortGroupId.contains( $_.MoRef ) -and $VsSwitch.PortGroup.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -12279,7 +12365,7 @@ function VSSPortGroup_to_VM
 					Connect-VisioObject $VsSwitchObject $VssPortObject
 					$y += 1.50
 					
-					ForEach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $VssPort.VmId.contains( $_.MoRef ) -and $VssPort.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) -and $_.ClusterId -eq "" } | Sort-Object Name ) ) `
+					foreach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $VssPort.VmId.contains( $_.MoRef ) -and $VssPort.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) -and $_.ClusterId -eq "" } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						if ( $VM.OS -eq "" ) `
@@ -12410,7 +12496,7 @@ function VDS_to_Host
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -12429,7 +12515,7 @@ function VDS_to_Host
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -12448,7 +12534,7 @@ function VDS_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12467,7 +12553,7 @@ function VDS_to_Host
 				}
 				Connect-VisioObject $ClusterObject $HostObject
 				
-				ForEach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -12487,7 +12573,7 @@ function VDS_to_Host
 					Connect-VisioObject $HostObject $VdSwitchObject
 					$y += 1.50
 					
-					ForEach ( $VdsPort in ( $VdsPortImport | Where-Object { $VdSwitch.PortGroupId.contains( $_.MoRef ) -and $VdSwitch.PortGroupName.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+					foreach ( $VdsPort in ( $VdsPortImport | Where-Object { $VdSwitch.PortGroupId.contains( $_.MoRef ) -and $VdSwitch.PortGroupName.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 					{ `
 						$x += 2.50
 						$VdsPortObject = Add-VisioObjectVdsPG $VdsPortGroupObj $VdsPort
@@ -12510,7 +12596,7 @@ function VDS_to_Host
 			}
 		}
 
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -12529,7 +12615,7 @@ function VDS_to_Host
 			}
 			Connect-VisioObject $DatacenterObject $HostObject
 			
-			ForEach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $VmHost.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $VmHost.ClusterId -eq "" -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12549,7 +12635,7 @@ function VDS_to_Host
 				Connect-VisioObject $HostObject $VdSwitchObject
 				$y += 1.50
 
-				ForEach ( $VdsPort in ( $VdsPortImport | Where-Object { $VdSwitch.PortGroupId.contains( $_.MoRef ) -and $VdSwitch.PortGroupName.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
+				foreach ( $VdsPort in ( $VdsPortImport | Where-Object { $VdSwitch.PortGroupId.contains( $_.MoRef ) -and $VdSwitch.PortGroupName.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name ) ) `
 				{ `
 					$x += 2.50
 					$VdsPortObject = Add-VisioObjectVdsPG $VdsPortGroupObj $VdsPort
@@ -12641,7 +12727,7 @@ function VMK_to_VDS
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -12660,7 +12746,7 @@ function VMK_to_VDS
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -12679,7 +12765,7 @@ function VMK_to_VDS
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
+			foreach ( $VmHost in ( $VmHostImport | Where-Object { $Cluster.VmHostId.contains( $_.MoRef ) -and $Cluster.VmHost.contains( $_.Name ) -and $_.Cluster -notlike $null } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12698,7 +12784,7 @@ function VMK_to_VDS
 				}
 				Connect-VisioObject $ClusterObject $HostObject
 				
-				ForEach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -12718,7 +12804,7 @@ function VMK_to_VDS
 					Connect-VisioObject $HostObject $VdSwitchObject
 					$y += 1.50
 					
-					ForEach ( $VdsVmk in ( $VdsVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VdSwitch.MoRef ) -and $_.VSwitch.contains( $VdSwitch.Name ) } ) ) `
+					foreach ( $VdsVmk in ( $VdsVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VdSwitch.MoRef ) -and $_.VSwitch.contains( $VdSwitch.Name ) } ) ) `
 					{ `
 						$x += 2.50
 						$VdsVmkNicObject = Add-VisioObjectVMK $VdsVmkNicObj $VdsVmk
@@ -12741,7 +12827,7 @@ function VMK_to_VDS
 			}
 		}
 		
-		ForEach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" }  | Sort-Object Name -Descending ) ) `
+		foreach ( $VmHost in ( $VmHostImport | Where-Object { $Datacenter.VmHostId.contains( $_.MoRef ) -and $Datacenter.VmHost.contains( $_.Name ) -and $_.ClusterId -eq "" }  | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -12760,7 +12846,7 @@ function VMK_to_VDS
 			}
 			Connect-VisioObject $DatacenterObject $HostObject
 			
-			ForEach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $VmHost.vSwitchId.contains( $_.MoRef ) -and $VmHost.vSwitch.contains( $_.Name ) -and $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12780,7 +12866,7 @@ function VMK_to_VDS
 				Connect-VisioObject $HostObject $VdSwitchObject
 				$y += 1.50
 				
-				ForEach ( $VdsVmk in ( $VdsVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VdSwitch.MoRef ) -and $_.VSwitch.contains( $VdSwitch.Name ) -and $_.ClusterId -eq "" } ) ) `
+				foreach ( $VdsVmk in ( $VdsVmkImport | Sort-Object Name | Where-Object { $_.VmHostId.contains( $VmHost.MoRef ) -and $_.VmHost.contains( $VmHost.Name ) -and $_.VSwitchId.contains( $VdSwitch.MoRef ) -and $_.VSwitch.contains( $VdSwitch.Name ) -and $_.ClusterId -eq "" } ) ) `
 				{ `
 					$x += 1.50
 					$VdsVmkNicObject = Add-VisioObjectVMK $VdsVmkNicObj $VdsVmk
@@ -12870,7 +12956,7 @@ function VDSPortGroup_to_VM
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 		
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -12889,7 +12975,7 @@ function VDSPortGroup_to_VM
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $Datacenter.vSwitchId.contains( $_.MoRef ) -and $Datacenter.vSwitch.contains( $_.Name ) } | Sort-Object Name -Descending -Unique ) ) `
+		foreach ( $VdSwitch in ( $VdSwitchImport | Where-Object { $Datacenter.vSwitchId.contains( $_.MoRef ) -and $Datacenter.vSwitch.contains( $_.Name ) } | Sort-Object Name -Descending -Unique ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -12908,7 +12994,7 @@ function VDSPortGroup_to_VM
 			}
 			Connect-VisioObject $DatacenterObject $VdSwitchObject
 
-			ForEach ( $VdsPort in ( $VdsPortImport | Where-Object { $VdSwitch.PortgroupId.contains( $_.MoRef ) -and $VdSwitch.PortgroupName.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+			foreach ( $VdsPort in ( $VdsPortImport | Where-Object { $VdSwitch.PortgroupId.contains( $_.MoRef ) -and $VdSwitch.PortgroupName.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -12928,7 +13014,7 @@ function VDSPortGroup_to_VM
 				Connect-VisioObject $VdSwitchObject $VdsPortObject
 				$y += 1.50
 
-				ForEach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $VdsPort.VmId.contains( $_.MoRef ) -and $VdsPort.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } ) ) `
+				foreach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $VdsPort.VmId.contains( $_.MoRef ) -and $VdsPort.Vm.contains( $_.Name ) -and ( $_.SRM.contains("placeholderVm") -eq $False ) } ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS -eq "" ) `
@@ -13082,7 +13168,7 @@ function Cluster_to_DRS_Rule
 		Write-Host "[$DateTime] Drawing vCenter object -" $vCenterImport.Name
 	}
 	
-	ForEach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
+	foreach ( $Datacenter in ( $DatacenterImport | Sort-Object Name -Descending ) ) `
 	{ `
 		$x = 2.50
 		$y += 1.50
@@ -13101,7 +13187,7 @@ function Cluster_to_DRS_Rule
 		}
 		Connect-VisioObject $VCObject $DatacenterObject
 		
-		ForEach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
+		foreach ( $Cluster in ( $ClusterImport | Where-Object { $Datacenter.ClusterId.contains( $_.MoRef ) -and $Datacenter.Cluster.contains( $_.Name ) } | Sort-Object Name -Descending ) ) `
 		{ `
 			$x = 5.00
 			$y += 1.50
@@ -13120,7 +13206,7 @@ function Cluster_to_DRS_Rule
 			}
 			Connect-VisioObject $DatacenterObject $ClusterObject
 			
-			ForEach ( $DRSRule in ( $DrsRuleImport | Where-Object { $_.Cluster -eq $Cluster.Name -and $_.ClusterId -eq $Cluster.Moref } | Sort-Object Name -Descending ) ) `
+			foreach ( $DRSRule in ( $DrsRuleImport | Where-Object { $_.Cluster -eq $Cluster.Name -and $_.ClusterId -eq $Cluster.Moref } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -13140,7 +13226,7 @@ function Cluster_to_DRS_Rule
 				Connect-VisioObject $ClusterObject $DRSObject
 				$y += 1.50
 				
-				ForEach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $DRSRule.VmId.contains( $_.MoRef ) -and $DRSRule.Vm.contains( $_.Name )} ) ) `
+				foreach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $DRSRule.VmId.contains( $_.MoRef ) -and $DRSRule.Vm.contains( $_.Name )} ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS -eq "" ) `
@@ -13199,7 +13285,7 @@ function Cluster_to_DRS_Rule
 				}
 			}	
 
-			ForEach ( $DrsVmHostRule in ( $DrsVmHostImport | Where-Object { $_.Cluster -eq $Cluster.Name -and $_.ClusterId -eq $Cluster.Moref } | Sort-Object Name -Descending ) ) `
+			foreach ( $DrsVmHostRule in ( $DrsVmHostImport | Where-Object { $_.Cluster -eq $Cluster.Name -and $_.ClusterId -eq $Cluster.Moref } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -13218,7 +13304,7 @@ function Cluster_to_DRS_Rule
 				}
 				Connect-VisioObject $ClusterObject $DRSVMHostRuleObject
 				
-				ForEach ( $DrsClusterGroup in ( $DrsClusterGroupImport | Where-Object { $_.Name.contains( $DrsVmHostRule.VMHostGroup ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $DrsClusterGroup in ( $DrsClusterGroupImport | Where-Object { $_.Name.contains( $DrsVmHostRule.VMHostGroup ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -13238,7 +13324,7 @@ function Cluster_to_DRS_Rule
 					Connect-VisioObject $DRSVMHostRuleObject $DrsClusterGroupObject
 					$y += 1.50
 			
-					ForEach ( $VmHost in ( $VmHostImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
+					foreach ( $VmHost in ( $VmHostImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
 					{ `
 						$x += 2.50
 						$HostObject = Add-VisioObjectHost $HostObj $VMHost
@@ -13259,7 +13345,7 @@ function Cluster_to_DRS_Rule
 					
 				}
 				
-				ForEach ( $DrsClusterGroup in ( $DrsClusterGroupImport | Where-Object { $_.Name.contains( $DrsVmHostRule.VMGroup ) } | Sort-Object Name -Descending ) ) `
+				foreach ( $DrsClusterGroup in ( $DrsClusterGroupImport | Where-Object { $_.Name.contains( $DrsVmHostRule.VMGroup ) } | Sort-Object Name -Descending ) ) `
 				{ `
 					$x = 10.00
 					$y += 1.50
@@ -13279,7 +13365,7 @@ function Cluster_to_DRS_Rule
 					Connect-VisioObject $DRSVMHostRuleObject $DrsClusterGroupObject
 					$y += 1.50
 					
-					ForEach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
+					foreach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
 					{ `
 						$x += 2.50
 						if ( $VM.OS -eq "" ) `
@@ -13339,7 +13425,7 @@ function Cluster_to_DRS_Rule
 				}
 			}
 			
-			ForEach ( $DrsClusterGroup in ( $DrsClusterGroupImport | Where-Object { $_.Cluster -eq $Cluster.Name -and $_.ClusterId -eq $Cluster.Moref -and $_.DrsVMHostRule -eq "" } | Sort-Object Name -Descending ) ) `
+			foreach ( $DrsClusterGroup in ( $DrsClusterGroupImport | Where-Object { $_.Cluster -eq $Cluster.Name -and $_.ClusterId -eq $Cluster.Moref -and $_.DrsVMHostRule -eq "" } | Sort-Object Name -Descending ) ) `
 			{ `
 				$x = 7.50
 				$y += 1.50
@@ -13359,7 +13445,7 @@ function Cluster_to_DRS_Rule
 				Connect-VisioObject $ClusterObject $DrsClusterGroupObject
 				$y += 1.50
 			
-				ForEach ( $VmHost in ( $VmHostImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
+				foreach ( $VmHost in ( $VmHostImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
 				{ `
 					$x += 2.50
 					$HostObject = Add-VisioObjectHost $HostObj $VMHost
@@ -13379,7 +13465,7 @@ function Cluster_to_DRS_Rule
 					$DrsClusterGroupObject  = $HostObject
 				}
 						
-				ForEach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
+				foreach ( $VM in ( $VmImport | Sort-Object Name | Where-Object { $DrsClusterGroup.MemberId.contains( $_.MoRef ) -and $DrsClusterGroup.Member.contains( $_.Name ) } ) ) `
 				{ `
 					$x += 2.50
 					if ( $VM.OS -eq "" ) `
@@ -13484,6 +13570,6 @@ function Open_Final_Visio
 
 #endregion ~~< Event Handlers >~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$False | Out-Null
+set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$False | Out-Null
 
 Main
